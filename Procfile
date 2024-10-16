@@ -1,1 +1,1 @@
-web: gunicorn priorities:server --bind 0.0.0.0:$PORT
+web: gunicorn app:server --bind 0.0.0.0:$PORT
