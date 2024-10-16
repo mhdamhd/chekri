@@ -1,2 +1,6 @@
 dash
+dash-bootstrap-components
+pandas
+plotly
+xlsxwriter
 gunicorn  # For production server
