@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 # Initialize the Dash app with a modern theme (Bootstrap for styling)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
+server = app.server
 # Define custom styles for better visual hierarchy
 CARD_STYLE = {
     "box-shadow": "0 4px 6px 0 rgba(0, 0, 0, 0.18)",
