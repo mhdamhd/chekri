@@ -85,14 +85,6 @@ initial_pcs = [
     {"name": "PC 4", "link": "1lNcsXdWQ2y2QKNexgLk_ZjBHOaXEcMXBNtmSBw_dtKs"},  
 ]
 
-def create_pc_row(name, link, index):
-    return dbc.Row([
-        dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
-        dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
-        dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
-        dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
-    ], className="mb-2")
-
 # App layout
 app.layout = dbc.Container([
     dbc.Row([
@@ -172,6 +164,13 @@ app.layout = dbc.Container([
 ], fluid=True, className="px-4 py-5 bg-light")
 
 def register_callbacks(app):
+    def create_pc_row(name, link, index):
+        return dbc.Row([
+            dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
+            dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
+            dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
+            dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
+        ], className="mb-2")
 
     # Helper function to extract Google Sheet ID from either URL or direct ID
     def extract_sheet_id(link):
