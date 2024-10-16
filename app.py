@@ -15,8 +15,10 @@ sidebar = dbc.Nav(
         dbc.NavLink("Prioritization", href="/prioritization", active="exact"),
         dbc.NavLink("Replacement Distribution Local", href="/distribution_local", active="exact"),
         dbc.NavLink("Quota Distribution Local", href="/quota_local", active="exact"),
-        # dbc.NavLink("Replacement Distribution Remote", href="/distribution_remote", active="exact"),
-        # dbc.NavLink("Quota Distribution Remote", href="/quota_remote", active="exact"),
+        dbc.NavLink("Replacement Distribution Remote", href="/distribution_remote", active="exact"),
+        dbc.NavLink("Quota Distribution Remote", href="/quota_remote", active="exact"),
+        dbc.NavLink("Links Distribution Remote", href="/links_remote", active="exact"),
+        dbc.NavLink("Merge Priorities", href="/merge_priorities", active="exact"),
         # Add new apps here without modifying their code
     ],
     vertical=True,
@@ -51,15 +53,25 @@ def display_page(pathname):
         module.register_callbacks(app)  # Register callbacks dynamically
         return module.app.layout
 
-    # elif pathname == '/distribution_remote':
-    #     module = importlib.import_module('replacement_distribution')  # Distribution
-    #     module.register_callbacks(app)  # Register callbacks dynamically
-    #     return module.app.layout
+    elif pathname == '/distribution_remote':
+        module = importlib.import_module('replacement_distribution_remote')  # Distribution
+        module.register_callbacks(app)  # Register callbacks dynamically
+        return module.app.layout
 
-    # elif pathname == '/quota_remote':
-    #     module = importlib.import_module('quota_distribution')  # Distribution
-    #     module.register_callbacks(app)  # Register callbacks dynamically
-    #     return module.app.layout
+    elif pathname == '/quota_remote':
+        module = importlib.import_module('quota_distribution_remote')  # Distribution
+        module.register_callbacks(app)  # Register callbacks dynamically
+        return module.app.layout
+
+    elif pathname == '/links_remote':
+        module = importlib.import_module('links_distribution_remote')  # Distribution
+        module.register_callbacks(app)  # Register callbacks dynamically
+        return module.app.layout
+
+    elif pathname == '/merge_priorities':
+        module = importlib.import_module('merge_priorities')  # Distribution
+        module.register_callbacks(app)  # Register callbacks dynamically
+        return module.app.layout
 
     else:
         return html.Div("Welcome to the Dashboard")
