@@ -67,6 +67,69 @@ initial_pcs = [
     {"name": "PC 47", "link": "13m1OqjkOk2eKCi7oHudYlN_BJpzGUcF0"},
 ]
 
+
+def create_pc_row(name, link, index):
+    return dbc.Row([
+        dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
+        dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
+        dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
+        dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
+    ], className="mb-2")
+
+# App layout
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col([
+            html.H1("RPA Assignment Dashboard", className="display-4 text-center mb-3"),
+            html.P("Distribute maids across Google Sheets based on priority.", className="lead text-center"),
+        ], width=12)
+    ], style=HEADER_STYLE),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardHeader(html.H4("Maid Distribution", className="text-white"), className="bg-primary"),
+                dbc.CardBody([
+                    dcc.Upload(
+                        id='upload-maid-data',
+                        children=html.Div([
+                            html.I(className="fas fa-file-excel me-2"),
+                            'Drag and Drop or ',
+                            html.A('Select Maid Excel File', className="text-primary")
+                        ]),
+                        style={
+                            'width': '100%',
+                            'height': '60px',
+                            'lineHeight': '60px',
+                            'borderWidth': '2px',
+                            'borderStyle': 'dashed',
+                            'borderRadius': '15px',
+                            'textAlign': 'center',
+                            'margin': '20px 0',
+                            'cursor': 'pointer',
+                        },
+                        multiple=False
+                    ),
+                    html.Div(id='maid-upload-status', className="mt-3"),
+                    html.Div(id='pc-container', children=[
+                        dbc.Row([
+                            dbc.Col(dbc.Button("Select All", id="select-all-button", color="info", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
+                        ]),
+                        html.Div(id='pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
+                    ]),
+                    dbc.Button("Distribute Maids", id="btn-distribute-maids", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
+                    dbc.Spinner(html.Div(id="maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
+                ])
+            ], style=CARD_STYLE),
+        ], width=12),
+    ]),
+    dcc.Store(id='pc-data-store', data=initial_pcs),
+    dcc.Store(id='undo-store', data=[]),
+], fluid=True, className="px-4 py-5 bg-light")
+
+
 def register_callbacks(app):
 
     def create_pc_row(name, link, index):
@@ -77,58 +140,6 @@ def register_callbacks(app):
             dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
         ], className="mb-2")
 
-    # App layout
-    app.layout = dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                html.H1("RPA Assignment Dashboard", className="display-4 text-center mb-3"),
-                html.P("Distribute maids across Google Sheets based on priority.", className="lead text-center"),
-            ], width=12)
-        ], style=HEADER_STYLE),
-
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H4("Maid Distribution", className="text-white"), className="bg-primary"),
-                    dbc.CardBody([
-                        dcc.Upload(
-                            id='upload-maid-data',
-                            children=html.Div([
-                                html.I(className="fas fa-file-excel me-2"),
-                                'Drag and Drop or ',
-                                html.A('Select Maid Excel File', className="text-primary")
-                            ]),
-                            style={
-                                'width': '100%',
-                                'height': '60px',
-                                'lineHeight': '60px',
-                                'borderWidth': '2px',
-                                'borderStyle': 'dashed',
-                                'borderRadius': '15px',
-                                'textAlign': 'center',
-                                'margin': '20px 0',
-                                'cursor': 'pointer',
-                            },
-                            multiple=False
-                        ),
-                        html.Div(id='maid-upload-status', className="mt-3"),
-                        html.Div(id='pc-container', children=[
-                            dbc.Row([
-                                dbc.Col(dbc.Button("Select All", id="select-all-button", color="info", className="mb-3"), width=3),
-                                dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
-                                dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
-                            ]),
-                            html.Div(id='pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
-                        ]),
-                        dbc.Button("Distribute Maids", id="btn-distribute-maids", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
-                        dbc.Spinner(html.Div(id="maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
-                    ])
-                ], style=CARD_STYLE),
-            ], width=12),
-        ]),
-        dcc.Store(id='pc-data-store', data=initial_pcs),
-        dcc.Store(id='undo-store', data=[]),
-    ], fluid=True, className="px-4 py-5 bg-light")
 
     # Helper function to extract Google Sheet ID from either URL or direct ID
     def extract_sheet_id(link):
