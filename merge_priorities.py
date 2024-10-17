@@ -59,9 +59,9 @@ def register_callbacks(app):
     def classify_maid(maid_row):
         """Classify the maid as accepted or rejected based on the document status."""
         docs_status = maid_row.get('Docs status')
-        if docs_status in [' Rejected', 'NA', ' ']:
+        if docs_status in [' Rejected', 'Rejected', 'NA', ' ']:
             return 'Rejected'
-        elif docs_status in [' Approved', 'Maid is already verified and accepted']:
+        elif docs_status in [' Approved', 'Approved', 'Maid is already verified and accepted']:
             return 'Accepted'
         return None
 
