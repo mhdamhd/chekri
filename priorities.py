@@ -182,7 +182,7 @@ app.layout = dbc.Container([
     
     dcc.Download(id="download-report"),
 ], fluid=True)
-
+layout = app.layout
 # List of African countries for prioritization
 african_countries = [
     "Algeria", "Algerian", "Algerians", "Algerian (adj.)",
@@ -244,6 +244,8 @@ african_countries = [
 
 
 def register_callbacks(app):
+
+
     def get_priority_names(mv_urgency_days):
         return {
             1: "MV with Super Angry Client",

@@ -43,7 +43,7 @@ app.layout = dbc.Container([
     ]),
     dcc.Download(id="download-priorities")
 ])
-
+layout = app.layout
 
 def register_callbacks(app):
     

@@ -176,7 +176,7 @@ app.layout = dbc.Container([
     dcc.Download(id="download-replacement-distribution"),
     dcc.Download(id="download-quota-distribution"),
 ], fluid=True, className="px-4 py-5 bg-light")
-
+layout = app.layout
 
 def register_callbacks(app):
     def clean_data_frame(df):

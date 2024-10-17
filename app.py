@@ -41,37 +41,37 @@ def display_page(pathname):
     if pathname == '/prioritization':
         module = importlib.import_module('priorities')  # Dynamically import the module
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout  # Return the layout from the module
+        return module.layout  # Return the layout from the module
 
     elif pathname == '/distribution_local':
         module = importlib.import_module('replacement_distribution')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     elif pathname == '/quota_local':
         module = importlib.import_module('quota_distribution')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     elif pathname == '/distribution_remote':
         module = importlib.import_module('replacement_distribution_remote')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     elif pathname == '/quota_remote':
         module = importlib.import_module('quota_distribution_remote')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     elif pathname == '/links_remote':
         module = importlib.import_module('links_distribution_remote')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     elif pathname == '/merge_priorities':
         module = importlib.import_module('merge_priorities')  # Distribution
         module.register_callbacks(app)  # Register callbacks dynamically
-        return module.app.layout
+        return module.layout
 
     else:
         return html.Div("Welcome to the Dashboard")

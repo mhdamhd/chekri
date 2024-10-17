@@ -170,7 +170,7 @@ app.layout = dbc.Container([
     dcc.Store(id='pc-data-store', data=initial_pcs),
     dcc.Store(id='undo-store', data=[]),
 ], fluid=True, className="px-4 py-5 bg-light")
-
+layout = app.layout
 
 def register_callbacks(app):
     def create_pc_row(name, link, index):

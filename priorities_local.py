@@ -182,7 +182,7 @@ app.layout = dbc.Container([
     
     dcc.Download(id="download-report"),
 ], fluid=True)
-
+layout = app.layout
 # List of African countries for prioritization
 african_countries = [
     "Algeria", "Algerian", "Algerians", "Algerian (adj.)",
