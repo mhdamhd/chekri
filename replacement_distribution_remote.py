@@ -87,10 +87,10 @@ initial_pcs = [
 
 def create_pc_row(name, link, index):
     return dbc.Row([
-        dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
-        dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
-        dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
-        dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
+        dbc.Col(dbc.Checkbox(id={'type': 'replacement-remote-pc-checkbox', 'index': index}, value=False), width=1),
+        dbc.Col(dbc.Input(id={'type': 'replacement-remote-pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
+        dbc.Col(dbc.Input(id={'type': 'replacement-remote-pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
+        dbc.Col(dbc.Button("Delete", id={'type': 'replacement-remote-delete-pc', 'index': index}, color="danger", size="sm"), width=2),
     ], className="mb-2")
 
 # App layout
@@ -109,7 +109,7 @@ app.layout = dbc.Container([
                 dbc.CardBody([
                     # Upload for Application Maids file
                     dcc.Upload(
-                        id='upload-maid-data',
+                        id='replacement-remote-upload-maid-data',
                         children=html.Div([
                             html.I(className="fas fa-file-excel me-2"),
                             'Drag and Drop or ',
@@ -128,11 +128,11 @@ app.layout = dbc.Container([
                         },
                         multiple=False
                     ),
-                    html.Div(id='maid-upload-status', className="mt-3"),
+                    html.Div(id='replacement-remote-maid-upload-status', className="mt-3"),
                     
                     # Add Upload for Replacement Maids file
                     dcc.Upload(
-                        id='upload-replacement-data',
+                        id='replacement-remote-upload-replacement-data',
                         children=html.Div([
                             html.I(className="fas fa-file-excel me-2"),
                             'Drag and Drop or ',
@@ -151,7 +151,7 @@ app.layout = dbc.Container([
                         },
                         multiple=False
                     ),
-                    html.Div(id='replacement-upload-status', className="mt-3"),
+                    html.Div(id='replacement-remote-replacement-upload-status', className="mt-3"),
                     
                     html.Div(id='pc-container', children=[
                         dbc.Row([
@@ -159,26 +159,26 @@ app.layout = dbc.Container([
                             dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
                             dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
                         ]),
-                        html.Div(id='pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
+                        html.Div(id='replacement-remote-pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
                     ]),
-                    dbc.Button("Distribute Maids", id="btn-distribute-maids", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
-                    dbc.Spinner(html.Div(id="maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
+                    dbc.Button("Distribute Maids", id="replacement-remote-btn-distribute-maids", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
+                    dbc.Spinner(html.Div(id="replacement-remote-maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
                 ])
             ], style=CARD_STYLE),
         ], width=12),
     ]),
-    dcc.Store(id='pc-data-store', data=initial_pcs),
-    dcc.Store(id='undo-store', data=[]),
+    dcc.Store(id='replacement-remote-pc-data-store', data=initial_pcs),
+    dcc.Store(id='replacement-remote-undo-store', data=[]),
 ], fluid=True, className="px-4 py-5 bg-light")
 layout = app.layout
 
 def register_callbacks(app):
     def create_pc_row(name, link, index):
         return dbc.Row([
-            dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
-            dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
-            dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
-            dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
+            dbc.Col(dbc.Checkbox(id={'type': 'replacement-remote-pc-checkbox', 'index': index}, value=False), width=1),
+            dbc.Col(dbc.Input(id={'type': 'replacement-remote-pc-name', 'index': index}, value=name, placeholder="PC Name"), width=2),
+            dbc.Col(dbc.Input(id={'type': 'replacement-remote-pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=7),
+            dbc.Col(dbc.Button("Delete", id={'type': 'replacement-remote-delete-pc', 'index': index}, color="danger", size="sm"), width=2),
         ], className="mb-2")
 
     # Helper function to extract Google Sheet ID from either URL or direct ID
@@ -341,9 +341,9 @@ def register_callbacks(app):
 
     # Callbacks for managing file uploads and PC selection
     @app.callback(
-        Output('maid-upload-status', 'children'),
-        Input('upload-maid-data', 'contents'),
-        State('upload-maid-data', 'filename')
+        Output('replacement-remote-maid-upload-status', 'children'),
+        Input('replacement-remote-upload-maid-data', 'contents'),
+        State('replacement-remote-upload-maid-data', 'filename')
     )
     def update_maid_upload_status(contents, filename):
         if contents is not None:
@@ -354,9 +354,9 @@ def register_callbacks(app):
         return ""
 
     @app.callback(
-        Output('replacement-upload-status', 'children'),
-        Input('upload-replacement-data', 'contents'),
-        State('upload-replacement-data', 'filename')
+        Output('replacement-remote-replacement-upload-status', 'children'),
+        Input('replacement-remote-upload-replacement-data', 'contents'),
+        State('replacement-remote-upload-replacement-data', 'filename')
     )
     def update_replacement_upload_status(contents, filename):
         if contents is not None:
@@ -367,16 +367,16 @@ def register_callbacks(app):
         return ""
 
     @app.callback(
-        [Output('pc-list', 'children'),
-        Output('pc-data-store', 'data'),
-        Output('undo-store', 'data'),
-        Output('undo-button', 'disabled')],
-        [Input('add-pc-button', 'n_clicks'),
-        Input({'type': 'delete-pc', 'index': ALL}, 'n_clicks'),
-        Input('undo-button', 'n_clicks')],
-        [State('pc-list', 'children'),
-        State('pc-data-store', 'data'),
-        State('undo-store', 'data')],
+        [Output('replacement-remote-pc-list', 'children'),
+        Output('replacement-remote-pc-data-store', 'data'),
+        Output('replacement-remote-undo-store', 'data'),
+        Output('replacement-remote-undo-button', 'disabled')],
+        [Input('replacement-remote-add-pc-button', 'n_clicks'),
+        Input({'type': 'replacement-remote-delete-pc', 'index': ALL}, 'n_clicks'),
+        Input('replacement-remote-undo-button', 'n_clicks')],
+        [State('replacement-remote-pc-list', 'children'),
+        State('replacement-remote-pc-data-store', 'data'),
+        State('replacement-remote-undo-store', 'data')],
         prevent_initial_call=True
     )
     def manage_pcs(add_clicks, delete_clicks, undo_clicks, current_pcs, stored_data, undo_data):
@@ -384,19 +384,19 @@ def register_callbacks(app):
         if not ctx_msg:
             raise dash.exceptions.PreventUpdate
 
-        if ctx_msg == 'add-pc-button':
+        if ctx_msg == 'replacement-remote-add-pc-button':
             new_index = len(current_pcs)
             new_pc = create_pc_row("", "", new_index)
             current_pcs.append(new_pc)
             stored_data.append({"name": "", "link": ""})
             undo_data.append(('add', new_index))
-        elif isinstance(ctx_msg, dict) and ctx_msg.get('type') == 'delete-pc':
+        elif isinstance(ctx_msg, dict) and ctx_msg.get('type') == 'replacement-remote-delete-pc':
             delete_index = ctx_msg['index']
             deleted_pc = current_pcs.pop(delete_index)
             deleted_data = stored_data.pop(delete_index)
             undo_data.append(('delete', delete_index, deleted_pc, deleted_data))
             current_pcs = [create_pc_row(stored_data[i]['name'], stored_data[i]['link'], i) for i in range(len(stored_data))]
-        elif ctx_msg == 'undo-button' and undo_data:
+        elif ctx_msg == 'replacement-remote-undo-button' and undo_data:
             last_action = undo_data.pop()
             if last_action[0] == 'add':
                 current_pcs.pop()
@@ -409,9 +409,9 @@ def register_callbacks(app):
         return current_pcs, stored_data, undo_data, len(undo_data) == 0
 
     @app.callback(
-        Output({'type': 'pc-checkbox', 'index': ALL}, 'value'),
-        Input('select-all-button', 'n_clicks'),
-        State({'type': 'pc-checkbox', 'index': ALL}, 'value'),
+        Output({'type': 'replacement-remote-pc-checkbox', 'index': ALL}, 'value'),
+        Input('replacement-remote-select-all-button', 'n_clicks'),
+        State({'type': 'replacement-remote-pc-checkbox', 'index': ALL}, 'value'),
         prevent_initial_call=True
     )
     def toggle_all_checkboxes(n_clicks, current_states):
@@ -424,15 +424,15 @@ def register_callbacks(app):
 
     # Callback for uploading both application maids and replacement maids
     @app.callback(
-        Output("maid-distribution-output", "children"),
-        Input("btn-distribute-maids", "n_clicks"),
-        [State("upload-maid-data", "contents"),
-        State("upload-maid-data", "filename"),
-        State("upload-replacement-data", "contents"),
-        State("upload-replacement-data", "filename"),
-        State({'type': 'pc-checkbox', 'index': ALL}, 'value'),
-        State({'type': 'pc-name', 'index': ALL}, 'value'),
-        State({'type': 'pc-link', 'index': ALL}, 'value')],
+        Output("replacement-remote-maid-distribution-output", "children"),
+        Input("replacement-remote-btn-distribute-maids", "n_clicks"),
+        [State("replacement-remote-upload-maid-data", "contents"),
+        State("replacement-remote-upload-maid-data", "filename"),
+        State("replacement-remote-upload-replacement-data", "contents"),
+        State("replacement-remote-upload-replacement-data", "filename"),
+        State({'type': 'replacement-remote-pc-checkbox', 'index': ALL}, 'value'),
+        State({'type': 'replacement-remote-pc-name', 'index': ALL}, 'value'),
+        State({'type': 'replacement-remote-pc-link', 'index': ALL}, 'value')],
         prevent_initial_call=True
     )
     def process_maid_distribution_with_replacements(n_clicks, app_contents, app_filename, rep_contents, rep_filename, pc_checks, pc_names, pc_links):

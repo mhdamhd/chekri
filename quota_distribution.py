@@ -48,41 +48,6 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             dbc.Card([
-                dbc.CardHeader(html.H4("Replacement Distribution", className="text-white"), className="bg-primary"),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id='upload-replacement-data',
-                        children=html.Div([
-                            html.I(className="fas fa-file-excel me-2"),
-                            'Drag and Drop or ',
-                            html.A('Select Replacement Excel File', className="text-primary")
-                        ]),
-                        style={
-                            'width': '100%',
-                            'height': '60px',
-                            'lineHeight': '60px',
-                            'borderWidth': '2px',
-                            'borderStyle': 'dashed',
-                            'borderRadius': '15px',
-                            'textAlign': 'center',
-                            'margin': '20px 0',
-                            'cursor': 'pointer',
-                        },
-                        multiple=False
-                    ),
-                    html.Div(id='replacement-upload-status', className="mt-3"),
-                    dbc.InputGroup([
-                        dbc.InputGroupText(html.I(className="fas fa-desktop")),
-                        dbc.Input(id="replacement-num-pcs", type="number", placeholder="Enter number of PCs", value=7),
-                    ], className="mb-3"),
-                    dbc.Button("Distribute Replacements", id="btn-distribute-replacements", color="primary", className="w-100", size="lg", style=BUTTON_STYLE),
-                    dbc.Spinner(html.Div(id="replacement-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
-                ])
-            ], style=CARD_STYLE),
-        ], width=12, md=6),
-
-        dbc.Col([
-            dbc.Card([
                 dbc.CardHeader(html.H4("Quota Distribution", className="text-white"), className="bg-info"),
                 dbc.CardBody([
                     dcc.Upload(
@@ -203,19 +168,6 @@ def register_callbacks(app):
 
     # Callbacks
     @app.callback(
-        Output('replacement-upload-status', 'children'),
-        Input('upload-replacement-data', 'contents'),
-        State('upload-replacement-data', 'filename')
-    )
-    def update_replacement_upload_status(contents, filename):
-        if contents is not None:
-            return html.Div([
-                html.I(className="fas fa-check-circle text-success me-2"),
-                f"File uploaded successfully: {filename}"
-            ], className="mt-2 alert alert-success")
-        return ""
-
-    @app.callback(
         Output('quota-upload-status', 'children'),
         Input('upload-quota-data', 'contents'),
         State('upload-quota-data', 'filename')
@@ -227,39 +179,6 @@ def register_callbacks(app):
                 f"File uploaded successfully: {filename}"
             ], className="mt-2 alert alert-success")
         return ""
-
-    @app.callback(
-        [Output("replacement-distribution-output", "children"),
-        Output("download-replacement-distribution", "data")],
-        [Input("btn-distribute-replacements", "n_clicks")],
-        [State("upload-replacement-data", "contents"),
-        State("upload-replacement-data", "filename"),
-        State("replacement-num-pcs", "value")],
-        prevent_initial_call=True
-    )
-    def process_replacement_distribution(n_clicks, contents, filename, num_pcs):
-        if contents is None:
-            return html.Div("Please upload a file first.", className="alert alert-warning"), None
-
-        df = parse_contents(contents, filename)
-        if not isinstance(df, pd.DataFrame):
-            return html.Div("Error processing the file.", className="alert alert-danger"), None
-
-        df_filtered = filter_blank_entries(df)
-        df_prioritized = prioritize_maids(df_filtered)
-        distribution = distribute_maids(df_prioritized, num_pcs or 7, 'replacement')
-
-        output = create_output_file(distribution, 'replacement')
-
-        summary = html.Div([
-            html.H5("Replacement Distribution Summary:", className="mt-4 mb-3"),
-            html.Ul([
-                html.Li(f"{pc} contains {len(maids)} maids", className="list-group-item") for pc, maids in distribution.items()
-            ], className="list-group"),
-            dcc.Graph(figure=create_distribution_chart(distribution), className="mt-4")
-        ])
-
-        return summary, dcc.send_bytes(output.getvalue(), "replacement_distribution.xlsx")
 
     @app.callback(
         [Output("quota-distribution-output", "children"),

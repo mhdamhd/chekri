@@ -136,41 +136,6 @@ app.layout = dbc.Container([
                 ])
             ], style=CARD_STYLE),
         ], width=12, md=6),
-
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader(html.H4("Quota Distribution", className="text-white"), className="bg-info"),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id='upload-quota-data',
-                        children=html.Div([
-                            html.I(className="fas fa-file-excel me-2"),
-                            'Drag and Drop or ',
-                            html.A('Select Quota Excel File', className="text-info")
-                        ]),
-                        style={
-                            'width': '100%',
-                            'height': '60px',
-                            'lineHeight': '60px',
-                            'borderWidth': '2px',
-                            'borderStyle': 'dashed',
-                            'borderRadius': '15px',
-                            'textAlign': 'center',
-                            'margin': '20px 0',
-                            'cursor': 'pointer',
-                        },
-                        multiple=False
-                    ),
-                    html.Div(id='quota-upload-status', className="mt-3"),
-                    dbc.InputGroup([
-                        dbc.InputGroupText(html.I(className="fas fa-desktop")),
-                        dbc.Input(id="quota-num-pcs", type="number", placeholder="Enter number of PCs", value=2),
-                    ], className="mb-3"),
-                    dbc.Button("Distribute Quota", id="btn-distribute-quota", color="info", className="w-100", size="lg", style=BUTTON_STYLE),
-                    dbc.Spinner(html.Div(id="quota-distribution-output"), color="info", type="border", spinnerClassName="mt-3"),
-                ])
-            ], style=CARD_STYLE),
-        ], width=12, md=6),
     ]),
 
     dcc.Download(id="download-replacement-distribution"),
@@ -382,19 +347,6 @@ def register_callbacks(app):
             ], className="mt-2 alert alert-success")
         return ""
 
-    @app.callback(
-        Output('quota-upload-status', 'children'),
-        Input('upload-quota-data', 'contents'),
-        State('upload-quota-data', 'filename')
-    )
-    def update_quota_upload_status(contents, filename):
-        if contents is not None:
-            return html.Div([
-                html.I(className="fas fa-check-circle text-success me-2"),
-                f"File uploaded successfully: {filename}"
-            ], className="mt-2 alert alert-success")
-        return ""
-
     # Callback for Replacement Distribution
     @app.callback(
         [Output("replacement-distribution-output", "children"),
@@ -432,40 +384,6 @@ def register_callbacks(app):
 
         return summary, dcc.send_bytes(output.getvalue(), "replacement_distribution.xlsx")
 
-    # Callback for Quota Distribution
-    @app.callback(
-        [Output("quota-distribution-output", "children"),
-        Output("download-quota-distribution", "data")],
-        [Input("btn-distribute-quota", "n_clicks")],
-        [State("upload-quota-data", "contents"),
-        State("upload-quota-data", "filename"),
-        State("quota-num-pcs", "value")],
-        prevent_initial_call=True
-    )
-    def process_quota_distribution(n_clicks, contents, filename, num_pcs):
-        if contents is None:
-            return html.Div("Please upload a file first.", className="alert alert-warning"), None
-
-        df = parse_contents_file1(contents, filename)
-        
-        if not isinstance(df, pd.DataFrame):
-            return html.Div("Error processing the file.", className="alert alert-danger"), None
-
-        df_filtered = filter_blank_entries(df)
-        df_prioritized = prioritize_maids(df_filtered)
-        distribution = distribute_maids_with_cancel_id(df_prioritized, num_pcs or 2, pd.DataFrame())
-
-        output = create_output_file(distribution, 'quota')
-
-        summary = html.Div([
-            html.H5("Quota Distribution Summary:", className="mt-4 mb-3"),
-            html.Ul([
-                html.Li(f"{pc} contains {len(maids)} maids", className="list-group-item") for pc, maids in distribution.items()
-            ], className="list-group"),
-            dcc.Graph(figure=create_distribution_chart(distribution), className="mt-4")
-        ])
-
-        return summary, dcc.send_bytes(output.getvalue(), "quota_distribution.xlsx")
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=7001)
