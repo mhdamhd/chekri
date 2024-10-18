@@ -22,7 +22,7 @@ sidebar = dbc.Nav(
         # dbc.NavLink("Replacement Distribution Local", href="/distribution_local", active="exact"),
         # dbc.NavLink("Quota Distribution Local", href="/quota_local", active="exact"),
         dbc.NavLink("Quota Distribution", href="/quota_remote", active="exact"),
-        dbc.NavLink("Replacement Distribution Remote", href="/distribution_remote", active="exact"),
+        dbc.NavLink("Replacement Distribution", href="/distribution_remote", active="exact"),
         dbc.NavLink("Links Distribution Remote", href="/links_remote", active="exact"),
         dbc.NavLink("Merge Priorities", href="/merge_priorities", active="exact"),
         # Add other links here
