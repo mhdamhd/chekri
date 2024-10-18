@@ -1,3 +1,5 @@
+import json
+import os
 import dash
 from dash import dcc, html, Input, Output, State, ALL, ctx
 import dash_bootstrap_components as dbc
@@ -15,7 +17,9 @@ from googleapiclient.http import HttpRequest
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME])
 
 # Set the path to your service account JSON file
-SERVICE_ACCOUNT_FILE = './service_account_key.json'
+# SERVICE_ACCOUNT_FILE = './service_account_key.json'
+service_account_key = os.environ.get('SERVICE_ACCOUNT_KEY')
+SERVICE_ACCOUNT_INFO = json.loads(service_account_key)
 
 NATIONALITY_RULES = {
     'Filipina': ['Filipina', 'Ethiopian'],
@@ -310,9 +314,10 @@ def register_callbacks(app):
     # Write data to Google Sheet
     def write_to_google_sheet(sheet_id, data):
         try:
-            creds = service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/spreadsheets']
-            )
+            # creds = service_account.Credentials.from_service_account_file(
+            #     SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/spreadsheets']
+            # )
+            creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
             service = build('sheets', 'v4', credentials=creds)
             service.spreadsheets().values().clear(spreadsheetId=sheet_id, range='A1:Z').execute()
             body = {'values': [data.columns.tolist()] + data.values.tolist()}
