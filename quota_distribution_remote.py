@@ -113,9 +113,9 @@ app.layout = dbc.Container([
                     html.Div(id='quota-remote-maid-upload-status', className="mt-3"),
                     html.Div(id='pc-container', children=[
                         dbc.Row([
-                            dbc.Col(dbc.Button("Select All", id="select-all-button", color="info", className="mb-3"), width=3),
-                            dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
-                            dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
+                            dbc.Col(dbc.Button("Select All", id="quota-remote-select-all-button", color="info", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Add New PC", id="quota-remote-add-pc-button", color="success", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Undo", id="quota-remote-undo-button", color="warning", className="mb-3", disabled=True), width=3),
                         ]),
                         html.Div(id='quota-remote-pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
                     ]),
