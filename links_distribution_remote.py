@@ -48,10 +48,10 @@ HEADER_STYLE = {
 # Helper function to create dynamic PC rows
 def create_pc_row(name, link, index):
     return dbc.Row([
-        dbc.Col(dbc.Checkbox(id={'type': 'pc-checkbox', 'index': index}, value=False), width=1),
+        dbc.Col(dbc.Checkbox(id={'type': 'links-remote-pc-checkbox', 'index': index}, value=False), width=1),
         dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=3),
         dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=6),
-        dbc.Col(dbc.Button("Delete", id={'type': 'delete-pc', 'index': index}, color="danger", size="sm"), width=2),
+        dbc.Col(dbc.Button("Delete", id={'type': 'links-remote-delete-pc', 'index': index}, color="danger", size="sm"), width=2),
     ], className="mb-2")
 
 # App layout
@@ -68,10 +68,10 @@ app.layout = dbc.Container([
             dbc.Card([
                 dbc.CardHeader(html.H4("Distribute Links to PCs", className="text-white"), className="bg-primary"),
                 dbc.CardBody([
-                    dcc.Tabs(id="input-tabs", value='upload-tab', children=[
+                    dcc.Tabs(id="links-remote-input-tabs", value='upload-tab', children=[
                         dcc.Tab(label='Upload Excel', value='upload-tab', children=[
                             dcc.Upload(
-                                id='upload-login-links',
+                                id='links-remote-upload-login-links',
                                 children=html.Div(['Drag and Drop or ', html.A('Select Excel File')]),
                                 style={
                                     'width': '100%', 'height': '60px', 'lineHeight': '60px', 'borderWidth': '2px',
@@ -79,7 +79,7 @@ app.layout = dbc.Container([
                                 },
                                 multiple=False
                             ),
-                            html.Div(id='upload-status', className="mt-2")
+                            html.Div(id="links-remote-input-tabs", className="mt-2")
                         ]),
                         dcc.Tab(label='Manual Input', value='manual-tab', children=[
                             dcc.Textarea(
@@ -97,15 +97,15 @@ app.layout = dbc.Container([
                         dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
                         dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
                     ]),
-                    html.Div(id='pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
-                    dbc.Button("Distribute Links", id="distribute-button", color="primary", className="w-100 mt-3", size="lg"),
-                    dbc.Spinner(html.Div(id="distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
+                    html.Div(id='links-remote-pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
+                    dbc.Button("Distribute Links", id="links-remote-distribution-output", color="primary", className="w-100 mt-3", size="lg"),
+                    dbc.Spinner(html.Div(id="links-remote-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
                 ])
             ], style=CARD_STYLE),
         ], width=12),
     ]),
-    dcc.Store(id='pc-data-store', data=initial_pcs),
-    dcc.Store(id='undo-store', data=[]),
+    dcc.Store(id='links-remote-pc-data-store', data=initial_pcs),
+    dcc.Store(id='links-remote-undo-store', data=[]),
 ], fluid=True, className="px-4 py-5 bg-light")
 layout = app.layout
 def register_callbacks(app):
@@ -165,16 +165,16 @@ def register_callbacks(app):
 
     # Callbacks to manage PC list (Add, Delete, Undo)
     @app.callback(
-        [Output('pc-list', 'children'),
-        Output('pc-data-store', 'data'),
-        Output('undo-store', 'data'),
-        Output('undo-button', 'disabled')],
-        [Input('add-pc-button', 'n_clicks'),
-        Input({'type': 'delete-pc', 'index': ALL}, 'n_clicks'),
-        Input('undo-button', 'n_clicks')],
-        [State('pc-list', 'children'),
-        State('pc-data-store', 'data'),
-        State('undo-store', 'data')],
+        [Output('links-remote-pc-list', 'children'),
+        Output('links-remote-pc-data-store', 'data'),
+        Output('links-remote-undo-store', 'data'),
+        Output('links-remote-undo-button', 'disabled')],
+        [Input('links-remote-add-pc-button', 'n_clicks'),
+        Input({'type': 'links-remote-delete-pc', 'index': ALL}, 'n_clicks'),
+        Input('links-remote-undo-button', 'n_clicks')],
+        [State('links-remote-pc-list', 'children'),
+        State('links-remote-pc-data-store', 'data'),
+        State('links-remote-undo-store', 'data')],
         prevent_initial_call=True
     )
     def manage_pcs(add_clicks, delete_clicks, undo_clicks, current_pcs, stored_data, undo_data):
@@ -182,19 +182,19 @@ def register_callbacks(app):
         if not ctx_msg:
             raise dash.exceptions.PreventUpdate
 
-        if ctx_msg == 'add-pc-button':
+        if ctx_msg == 'links-remote-add-pc-button':
             new_index = len(current_pcs)
             new_pc = create_pc_row("", "", new_index)
             current_pcs.append(new_pc)
             stored_data.append({"name": "", "link": ""})
             undo_data.append(('add', new_index))
-        elif isinstance(ctx_msg, dict) and ctx_msg.get('type') == 'delete-pc':
+        elif isinstance(ctx_msg, dict) and ctx_msg.get('type') == 'links-remote-delete-pc':
             delete_index = ctx_msg['index']
             deleted_pc = current_pcs.pop(delete_index)
             deleted_data = stored_data.pop(delete_index)
             undo_data.append(('delete', delete_index, deleted_pc, deleted_data))
             current_pcs = [create_pc_row(stored_data[i]['name'], stored_data[i]['link'], i) for i in range(len(stored_data))]
-        elif ctx_msg == 'undo-button' and undo_data:
+        elif ctx_msg == 'links-remote-undo-button' and undo_data:
             last_action = undo_data.pop()
             if last_action[0] == 'add':
                 current_pcs.pop()
@@ -207,9 +207,9 @@ def register_callbacks(app):
         return current_pcs, stored_data, undo_data, len(undo_data) == 0
 
     @app.callback(
-        Output({'type': 'pc-checkbox', 'index': ALL}, 'value'),
-        Input('select-all-button', 'n_clicks'),
-        State({'type': 'pc-checkbox', 'index': ALL}, 'value'),
+        Output({'type': 'links-remote-pc-checkbox', 'index': ALL}, 'value'),
+        Input('links-remote-select-all-button', 'n_clicks'),
+        State({'type': 'links-remote-pc-checkbox', 'index': ALL}, 'value'),
         prevent_initial_call=True
     )
     def toggle_all_checkboxes(n_clicks, current_states):
@@ -220,13 +220,13 @@ def register_callbacks(app):
         return [not all_checked] * len(current_states)
 
     @app.callback(
-        Output("distribution-output", "children"),
-        Input("distribute-button", "n_clicks"),
-        [State("input-tabs", "value"),  # Detect which tab is active (Excel or Manual)
+        Output("links-remote-distribution-output", "children"),
+        Input("links-remote-distribution-output", "n_clicks"),
+        [State("links-remote-input-tabs", "value"),  # Detect which tab is active (Excel or Manual)
         State("upload-login-links", "contents"),
         State("upload-login-links", "filename"),
         State("manual-login-links", "value"),
-        State({'type': 'pc-checkbox', 'index': ALL}, 'value'),
+        State({'type': 'links-remote-pc-checkbox', 'index': ALL}, 'value'),
         State({'type': 'pc-name', 'index': ALL}, 'value'),
         State({'type': 'pc-link', 'index': ALL}, 'value')],
         prevent_initial_call=True
@@ -287,9 +287,9 @@ def register_callbacks(app):
 
 
     @app.callback(
-        Output('upload-status', 'children'),
-        Input('upload-login-links', 'contents'),
-        State('upload-login-links', 'filename')
+        Output("links-remote-input-tabs", 'children'),
+        Input('links-remote-upload-login-links', 'contents'),
+        State('links-remote-upload-login-links', 'filename')
     )
     def update_upload_status(contents, filename):
         if contents is not None:
