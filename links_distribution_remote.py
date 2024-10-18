@@ -49,8 +49,8 @@ HEADER_STYLE = {
 def create_pc_row(name, link, index):
     return dbc.Row([
         dbc.Col(dbc.Checkbox(id={'type': 'links-remote-pc-checkbox', 'index': index}, value=False), width=1),
-        dbc.Col(dbc.Input(id={'type': 'pc-name', 'index': index}, value=name, placeholder="PC Name"), width=3),
-        dbc.Col(dbc.Input(id={'type': 'pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=6),
+        dbc.Col(dbc.Input(id={'type': 'links-remote-pc-name', 'index': index}, value=name, placeholder="PC Name"), width=3),
+        dbc.Col(dbc.Input(id={'type': 'links-remote-pc-link', 'index': index}, value=link, placeholder="Google Sheet URL or ID"), width=6),
         dbc.Col(dbc.Button("Delete", id={'type': 'links-remote-delete-pc', 'index': index}, color="danger", size="sm"), width=2),
     ], className="mb-2")
 
@@ -79,26 +79,26 @@ app.layout = dbc.Container([
                                 },
                                 multiple=False
                             ),
-                            html.Div(id="links-remote-input-tabs", className="mt-2")
+                            html.Div(id="links-remote-upload-status", className="mt-2")
                         ]),
                         dcc.Tab(label='Manual Input', value='manual-tab', children=[
                             dcc.Textarea(
-                                id='manual-login-links',
+                                id='links-remote-manual-login-links',
                                 placeholder='Enter login links, one per line',
                                 style={'width': '100%', 'height': '200px'}
                             ),
-                            html.Div(id='manual-input-status', className="mt-2")
+                            html.Div(id='links-remote-manual-input-status', className="mt-2")
                         ]),
                     ]),
                     html.Hr(),
                     html.H5("Select PCs to Distribute Links"),
                     dbc.Row([
-                        dbc.Col(dbc.Button("Select All", id="select-all-button", color="info", className="mb-3"), width=3),
-                        dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
-                        dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
+                        dbc.Col(dbc.Button("Select All", id="links-remote-select-all-button", color="info", className="mb-3"), width=3),
+                        dbc.Col(dbc.Button("Add New PC", id="links-remote-add-pc-button", color="success", className="mb-3"), width=3),
+                        dbc.Col(dbc.Button("Undo", id="links-remote-undo-button", color="warning", className="mb-3", disabled=True), width=3),
                     ]),
                     html.Div(id='links-remote-pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
-                    dbc.Button("Distribute Links", id="links-remote-distribution-output", color="primary", className="w-100 mt-3", size="lg"),
+                    dbc.Button("Distribute Links", id="links-remote-distribution-button", color="primary", className="w-100 mt-3", size="lg"),
                     dbc.Spinner(html.Div(id="links-remote-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
                 ])
             ], style=CARD_STYLE),
@@ -221,14 +221,14 @@ def register_callbacks(app):
 
     @app.callback(
         Output("links-remote-distribution-output", "children"),
-        Input("links-remote-distribution-output", "n_clicks"),
+        Input("links-remote-distribution-button", "n_clicks"),
         [State("links-remote-input-tabs", "value"),  # Detect which tab is active (Excel or Manual)
-        State("upload-login-links", "contents"),
-        State("upload-login-links", "filename"),
-        State("manual-login-links", "value"),
+        State("links-remote-upload-login-links", "contents"),
+        State("links-remote-upload-login-links", "filename"),
+        State("links-remote-manual-login-links", "value"),
         State({'type': 'links-remote-pc-checkbox', 'index': ALL}, 'value'),
-        State({'type': 'pc-name', 'index': ALL}, 'value'),
-        State({'type': 'pc-link', 'index': ALL}, 'value')],
+        State({'type': 'links-remote-pc-name', 'index': ALL}, 'value'),
+        State({'type': 'links-remote-pc-link', 'index': ALL}, 'value')],
         prevent_initial_call=True
     )
     def process_maid_distribution(n_clicks, active_tab, contents, filename, manual_links, pc_checks, pc_names, pc_links):
@@ -287,7 +287,7 @@ def register_callbacks(app):
 
 
     @app.callback(
-        Output("links-remote-input-tabs", 'children'),
+        Output("links-remote-upload-status", 'children'),
         Input('links-remote-upload-login-links', 'contents'),
         State('links-remote-upload-login-links', 'filename')
     )

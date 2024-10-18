@@ -254,7 +254,7 @@ def register_callbacks(app):
     # Callbacks for managing file uploads and PC selection
     @app.callback(
         Output('quota-remote-maid-upload-status', 'children'),
-        Input('upload-maid-data', 'contents'),
+        Input('quota-remote-upload-maid-data', 'contents'),
         State('quota-remote-upload-maid-data', 'filename')
     )
     def update_maid_upload_status(contents, filename):
