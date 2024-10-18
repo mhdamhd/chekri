@@ -14,9 +14,9 @@ import json
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Set the path to your service account JSON file
-SERVICE_ACCOUNT_FILE = './service_account_key.json'
-# service_account_key = os.getenv('GOOGLE_SERVICE_ACCOUNT_KEY')
-# SERVICE_ACCOUNT_INFO = json.loads(service_account_key)
+# SERVICE_ACCOUNT_FILE = './service_account_key.json'
+service_account_key = os.environ.get('SERVICE_ACCOUNT_KEY')
+SERVICE_ACCOUNT_INFO = json.loads(service_account_key)
 
 # Initial PCs with sample Google Sheets URLs or IDs
 initial_pcs = [
@@ -141,8 +141,8 @@ def register_callbacks(app):
         return match.group(1) if match else link  # Return ID if found, otherwise return link (in case direct ID is provided)
 
     def write_to_google_sheet(sheet_id, data):
-        creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
-        # creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
+        # creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+        creds = service_account.Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO)
         service = build('sheets', 'v4', credentials=creds)
 
         # Clear the existing data and formatting in the sheet
