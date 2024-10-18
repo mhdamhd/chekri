@@ -163,12 +163,19 @@ app.layout = dbc.Container([
                     ]),
                     dbc.Button("Distribute Maids", id="replacement-remote-btn-distribute-maids", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
                     dbc.Spinner(html.Div(id="replacement-remote-maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
+                    dbc.InputGroup([
+                        dbc.InputGroupText(html.I(className="fas fa-desktop")),
+                        dbc.Input(id="replacement-excel-num-pcs", type="number", placeholder="Enter number of PCs", value=7),
+                    ], className="mb-3"),
+                    dbc.Button("Distribute & Download Excel", id="replacement-excel-btn-distribute-maids", color="primary", className="w-100", size="lg", style=BUTTON_STYLE),
+                    dbc.Spinner(html.Div(id="replacement-excel-maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
                 ])
             ], style=CARD_STYLE),
         ], width=12),
     ]),
     dcc.Store(id='replacement-remote-pc-data-store', data=initial_pcs),
     dcc.Store(id='replacement-remote-undo-store', data=[]),
+    dcc.Download(id="replacement-excel-download-excel"),
 ], fluid=True, className="px-4 py-5 bg-light")
 layout = app.layout
 
@@ -283,6 +290,20 @@ def register_callbacks(app):
                 pc_index = (pc_index + 1) % num_pcs
 
         return distribution
+
+    def create_output_file(distribution, distribution_type):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            for pc, maids in distribution.items():
+                pc_df = pd.DataFrame(maids)
+                if distribution_type == 'replacement':
+                    columns = ['Request ID', 'Housemaid Name', 'Cancel ID', 'Type', 'Gender', 'Priority Name']
+                else:
+                    columns = ['Request ID', 'Housemaid Name', 'Type', 'Gender', 'Priority Name']
+                # pc_df = pc_df[columns]
+                pc_df.to_excel(writer, sheet_name=pc, index=False)
+        return output
+
 
     HttpRequest.DEFAULT_HTTP_TIMEOUT = 300  # Set to 300 seconds (5 minutes)
 
@@ -492,6 +513,50 @@ def register_callbacks(app):
         summary.children.append(download_button)
 
         return summary
+
+
+    @app.callback(
+        [Output("replacement-excel-maid-distribution-output", "children"),
+        Output("replacement-excel-download-excel", "data")],
+        Input("replacement-excel-btn-distribute-maids", "n_clicks"),
+        [State("replacement-remote-upload-maid-data", "contents"),
+        State("replacement-remote-upload-maid-data", "filename"),
+        State("replacement-remote-upload-replacement-data", "contents"),
+        State("replacement-remote-upload-replacement-data", "filename"),
+        State("replacement-excel-num-pcs", "value")],
+        prevent_initial_call=True
+    )
+    def process_maid_distribution_with_replacements_to_excel(n_clicks, app_contents, app_filename, rep_contents, rep_filename, num_pcs):
+        if app_contents is None or rep_contents is None:
+            return html.Div("Please upload both application maids and replacement maids files.", className="alert alert-warning")
+
+        app_maids = parse_contents(app_contents, app_filename)
+        rep_maids = parse_contents(rep_contents, rep_filename)
+
+        if not isinstance(app_maids, pd.DataFrame) or not isinstance(rep_maids, pd.DataFrame):
+            return html.Div("Error processing the files.", className="alert alert-danger")
+
+        # Validate necessary columns
+        try:
+            app_maids = filter_blank_entries(app_maids)
+            # app_maids = prioritize_maids(app_maids)
+        except KeyError as e:
+            return html.Div(str(e), className="alert alert-danger")
+
+        # Perform distribution with replacements
+        distribution = distribute_maids_with_replacements(app_maids, rep_maids, num_pcs)
+        output = create_output_file(distribution, 'replacement')
+
+        summary = html.Div([
+            html.H5("Replacement Distribution Summary:", className="mt-4 mb-3"),
+            html.Ul([
+                html.Li(f"{pc} contains {len(maids)} maids", className="list-group-item") for pc, maids in distribution.items()
+            ], className="list-group"),
+            dcc.Graph(figure=create_distribution_chart(distribution), className="mt-4")
+        ])
+
+        return summary, dcc.send_bytes(output.getvalue(), "replacement_distribution.xlsx")
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=7121)

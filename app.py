@@ -19,10 +19,10 @@ server = app.server
 sidebar = dbc.Nav(
     [
         dbc.NavLink("Prioritization", href="/prioritization", active="exact"),
-        dbc.NavLink("Replacement Distribution Local", href="/distribution_local", active="exact"),
+        # dbc.NavLink("Replacement Distribution Local", href="/distribution_local", active="exact"),
         # dbc.NavLink("Quota Distribution Local", href="/quota_local", active="exact"),
-        dbc.NavLink("Replacement Distribution Remote", href="/distribution_remote", active="exact"),
         dbc.NavLink("Quota Distribution", href="/quota_remote", active="exact"),
+        dbc.NavLink("Replacement Distribution Remote", href="/distribution_remote", active="exact"),
         dbc.NavLink("Links Distribution Remote", href="/links_remote", active="exact"),
         dbc.NavLink("Merge Priorities", href="/merge_priorities", active="exact"),
         # Add other links here
@@ -45,14 +45,14 @@ app.layout = dbc.Container([
 def display_page(pathname):
     if pathname == '/prioritization':
         return prioritization_layout
-    elif pathname == '/distribution_local':
-        return replacement_distribution_layout
+    # elif pathname == '/distribution_local':
+    #     return replacement_distribution_layout
     # elif pathname == '/quota_local':
     #     return quota_distribution_layout
-    elif pathname == '/distribution_remote':
-        return replacement_distribution_remote_layout
     elif pathname == '/quota_remote':
         return quota_distribution_remote_layout
+    elif pathname == '/distribution_remote':
+        return replacement_distribution_remote_layout
     elif pathname == '/links_remote':
         return links_distribution_remote_layout
     elif pathname == '/merge_priorities':
@@ -62,10 +62,10 @@ def display_page(pathname):
 
 # Register callbacks for each app
 prioritization_callbacks(app)
-replacement_distribution_callbacks(app)
+# replacement_distribution_callbacks(app)
 # quota_distribution_callbacks(app)
-replacement_distribution_remote_callbacks(app)
 quota_distribution_remote_callbacks(app)
+replacement_distribution_remote_callbacks(app)
 links_distribution_remote_callbacks(app)
 merge_priorities_layout_callbacks(app)
 
