@@ -121,12 +121,19 @@ app.layout = dbc.Container([
                     ]),
                     dbc.Button("Distribute Maids", id="quota-remote-maid-distribution-output", color="primary", className="w-100 mt-3", size="lg", style=BUTTON_STYLE),
                     dbc.Spinner(html.Div(id="quota-remote-maid-distribution-output"), color="primary", type="border", spinnerClassName="mt-3"),
+                    dbc.InputGroup([
+                        dbc.InputGroupText(html.I(className="fas fa-desktop")),
+                        dbc.Input(id="quota-excel-num-pcs", type="number", placeholder="Enter number of PCs", value=2),
+                    ], className="mb-3"),
+                    dbc.Button("Distribute & Download Excel", id="quota-excel-maid-distribution-output", color="info", className="w-100", size="lg", style=BUTTON_STYLE),
+                    dbc.Spinner(html.Div(id="quota-excel-maid-distribution-output"), color="info", type="border", spinnerClassName="mt-3"),
                 ])
             ], style=CARD_STYLE),
         ], width=12),
     ]),
     dcc.Store(id='quota-remote-pc-data-store', data=initial_pcs),
     dcc.Store(id='quota-remote-undo-store', data=[]),
+    dcc.Download(id="quota-excel-download-excel"),
 ], fluid=True, className="px-4 py-5 bg-light")
 layout = app.layout
 
@@ -195,6 +202,21 @@ def register_callbacks(app):
                 distribution[f"PC_{pc_index + 1}"].append(maid_info)
                 pc_index = (pc_index + 1) % num_pcs
         return distribution
+
+    def create_output_file(distribution, distribution_type):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            for pc, maids in distribution.items():
+                pc_df = pd.DataFrame(maids)
+                if distribution_type == 'replacement':
+                    columns = ['Request ID', 'Housemaid Name', 'Cancel ID', 'Type', 'Gender', 'Priority Name']
+                else:
+                    # columns = ['Request ID', 'Housemaid Name', 'Type', 'Gender', 'Priority Name']
+                    columns = ['Priority number', 'id', 'name', 'Nationality']
+                pc_df = pc_df[columns]
+                pc_df.to_excel(writer, sheet_name=pc, index=False)
+        return output
+
 
     HttpRequest.DEFAULT_HTTP_TIMEOUT = 300  # Set to 300 seconds (5 minutes)
 
@@ -386,6 +408,45 @@ def register_callbacks(app):
 
         return summary
 
+    # Callback to generate and download Excel file
+    @app.callback(
+        [Output("quota-excel-maid-distribution-output", "children"),
+        Output("quota-excel-download-excel", "data")],
+        Input("quota-excel-maid-distribution-output", "n_clicks"),
+        [State("quota-remote-upload-maid-data", "contents"),
+        State("quota-remote-upload-maid-data", "filename"),
+        State("quota-excel-num-pcs", "value")],
+        prevent_initial_call=True
+    )
+    def process_maid_distribution_to_excel(n_clicks, contents, filename, num_pcs):
+            if contents is None:
+                return html.Div("Please upload a file first.", className="alert alert-warning")
+
+            df = parse_contents(contents, filename)
+            if not isinstance(df, pd.DataFrame):
+                return html.Div("Error processing the file.", className="alert alert-danger")
+
+            try:
+                df_filtered = filter_blank_entries(df)
+                # df_prioritized = prioritize_maids(df_filtered)
+                df_prioritized = df_filtered
+            except KeyError as e:
+                return html.Div(str(e), className="alert alert-danger")
+
+            distribution = distribute_maids(df_prioritized, num_pcs or 2)
+
+            output = create_output_file(distribution, 'quota')
+
+            summary = html.Div([
+            html.H5("Quota Distribution Summary:", className="mt-4 mb-3"),
+            html.Ul([
+                html.Li(f"{pc} contains {len(maids)} maids", className="list-group-item") for pc, maids in distribution.items()
+            ], className="list-group"),
+            dcc.Graph(figure=create_distribution_chart(distribution), className="mt-4")
+        ])
+
+            return summary, dcc.send_bytes(output.getvalue(), "quota_distribution.xlsx")
+        
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=7121)
