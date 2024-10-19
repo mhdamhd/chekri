@@ -486,7 +486,8 @@ def register_callbacks(app):
         offer_letter_threshold = offer_letter_threshold or 2
         # df['Offer Letter date'] = pd.to_datetime(df['Offer Letter date'], errors='coerce')
         today = pd.Timestamp.today()
-        df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No') & (df['Payment added?'] == 'No'))]
+        df = df[((df['Payment added?'] == 'No'))]
+        # df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No') & (df['Payment added?'] == 'No'))]
         # df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No')) | (((df['MB?'] == 'Yes') | (df['Has Contract MB?'] == 'Yes')) & (((today - df['Offer Letter date']) <= timedelta(days=offer_letter_threshold))))]
         priority_counters = {
             6: counter_filipina_live_in or 0,
