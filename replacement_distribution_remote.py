@@ -44,7 +44,7 @@ NATIONALITY_RULES = {
     'Lebanese': ['Lebanese'],
     'Malagasy': ['Malagasy', 'Filipina'],
     'Moroccan': ['Moroccan'],
-    'Pakistani': ['Pakistani', 'Filipina'],
+    'Pakistani': ['Pakistani'],
     'Peruvian': ['Peruvian', 'Filipina'],
     'Rwandan': ['Rwandan', 'Filipina'],
     'South African': ['South African', 'Filipina'],
@@ -52,9 +52,9 @@ NATIONALITY_RULES = {
     'Turkmen': ['Turkmen', 'Filipina'],
     'Ukrainian': ['Ukrainian', 'Filipina'],
     'Zimbabwean': ['Zimbabwean', 'Filipina'],
-    'Azerbaijani': ['Azerbaijani'],
-    'Belarusian': ['Belarusian'],
-    'Bangladeshi': ['Bangladeshi']
+    'Azerbaijani': ['Azerbaijani', 'Filipina'],
+    'Belarusian': ['Belarusian', 'Spanish'],
+    'Bangladeshi': ['Bangladeshi', 'Filipina']
     # Add more nationality rules here as needed
 }
 
@@ -162,9 +162,9 @@ app.layout = dbc.Container([
                     
                     html.Div(id='pc-container', children=[
                         dbc.Row([
-                            dbc.Col(dbc.Button("Select All", id="select-all-button", color="info", className="mb-3"), width=3),
-                            dbc.Col(dbc.Button("Add New PC", id="add-pc-button", color="success", className="mb-3"), width=3),
-                            dbc.Col(dbc.Button("Undo", id="undo-button", color="warning", className="mb-3", disabled=True), width=3),
+                            dbc.Col(dbc.Button("Select All", id="replacement-remote-select-all-button", color="info", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Add New PC", id="replacement-remote-add-pc-button", color="success", className="mb-3"), width=3),
+                            dbc.Col(dbc.Button("Undo", id="replacement-remote-undo-button", color="warning", className="mb-3", disabled=True), width=3),
                         ]),
                         html.Div(id='replacement-remote-pc-list', children=[create_pc_row(pc['name'], pc['link'], i) for i, pc in enumerate(initial_pcs)]),
                     ]),
