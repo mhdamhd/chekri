@@ -52,6 +52,9 @@ NATIONALITY_RULES = {
     'Turkmen': ['Turkmen', 'Filipina'],
     'Ukrainian': ['Ukrainian', 'Filipina'],
     'Zimbabwean': ['Zimbabwean', 'Filipina'],
+    'Azerbaijani': ['Azerbaijani'],
+    'Belarusian': ['Belarusian'],
+    'Bangladeshi': ['Bangladeshi']
     # Add more nationality rules here as needed
 }
 
