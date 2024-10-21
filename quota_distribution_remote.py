@@ -18,7 +18,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.
 
 # Set the path to your service account JSON file
 # SERVICE_ACCOUNT_FILE = './service_account_key.json'
-service_account_key = os.environ.get('SERVICE_ACCOUNT_KEY')
+service_account_key = os.environ.get('SERVICE_ACCOUNT_KEY', '{}')
 SERVICE_ACCOUNT_INFO = json.loads(service_account_key)
 
 # Define custom styles
