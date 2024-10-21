@@ -289,8 +289,15 @@ def register_callbacks(app):
         try:
             if 'xlsx' in filename:
                 df = pd.read_excel(io.BytesIO(decoded))
+            elif 'csv' in filename:
+                try:
+                    # Read as TSV using '\t' as the delimiter
+                    df = pd.read_csv(io.StringIO(decoded.decode('utf-16')), delimiter='\t', skip_blank_lines=True)
+                except Exception as e:
+                    print("Failed to parse TSV file:", e)
+                    return html.Div(['There was an error processing the TSV file.'])
             else:
-                return html.Div(['Please upload an Excel file.'])
+                return html.Div(['Please upload an Excel or CSV file.'])
             return df
         except Exception as e:
             print(e)
