@@ -13,6 +13,9 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 app.title = "OTP Generator"
 
+DEFAULT_SECRET_KEY = "KMGXHPTI6ZEW5RWT"
+
+
 # App Layout
 app.layout = dbc.Container([
     # Hidden storage for secret key
@@ -112,7 +115,7 @@ def register_callbacks(app):
     )
     def update_otp(n_intervals, secret_key):
         if not secret_key:
-            return "No QR code uploaded yet.", ""
+            secret_key = DEFAULT_SECRET_KEY
 
         # Generate the current OTP
         totp = pyotp.TOTP(secret_key)
