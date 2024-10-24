@@ -11,4 +11,4 @@ openpyxl
 pyotp
 pyzbar
 Pillow
-opencv-python
+opencv-python-headless
