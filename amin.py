@@ -1,0 +1,125 @@
+import dash
+from dash import dcc, html, Input, Output, State
+import dash_bootstrap_components as dbc
+import pyotp
+from pyzbar.pyzbar import decode
+from PIL import Image
+import time
+import os
+import base64
+import io
+
+# Initialize Dash app
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
+app.title = "OTP Generator"
+
+# Global variable to store the secret key
+secret_key = None
+# App Layout
+app.layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(html.H1("OTP Generator with QR Code Upload"), className="text-center mt-4")
+    ]),
+    dbc.Row([
+        dbc.Col([
+            dcc.Upload(
+                id='upload-qr',
+                children=html.Div([
+                    'Drag and Drop or ',
+                    html.A('Select a QR Code File')
+                ]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '10px'
+                },
+                multiple=False
+            ),
+            html.Div(id='output-message', className='text-center mt-2'),
+        ], width=6, className='offset-md-3')
+    ]),
+    dbc.Row([
+        dbc.Col([
+            html.H2(id='otp-display', className='text-center mt-4'),
+            dcc.Interval(id='interval-component', interval=1000, n_intervals=0),
+            html.Div(id='time-left', className='text-center mt-2')
+        ])
+    ]),
+    dbc.Row([
+        dbc.Col([
+            dbc.Button("Reset QR Code", id='reset-button', color='danger', className='mt-4'),
+        ], width=12, className='text-center')
+    ])
+])
+layout = app.layout
+
+def register_callbacks(app):
+    # Function to extract secret key from QR code
+    def extract_secret_from_qr(image_data):
+        image = Image.open(io.BytesIO(image_data))
+        decoded_data = decode(image)
+        if decoded_data:
+            qr_code_data = decoded_data[0].data.decode("utf-8")
+            secret = qr_code_data.split('secret=')[1].split('&')[0]
+            return secret
+        return None
+
+
+    # Callback to handle QR code upload
+    @app.callback(
+        Output('output-message', 'children'),
+        Input('upload-qr', 'contents'),
+        prevent_initial_call=True
+    )
+    def upload_qr(contents):
+        global secret_key
+        if contents:
+            content_type, content_string = contents.split(',')
+            decoded_image = base64.b64decode(content_string)
+            
+            # Extract secret from uploaded QR code
+            new_secret_key = extract_secret_from_qr(decoded_image)
+            if new_secret_key:
+                secret_key = new_secret_key
+                return "QR Code uploaded successfully!"
+            else:
+                return "Failed to read QR code. Please upload a valid QR code."
+
+    # Callback to update OTP and time left
+    @app.callback(
+        [Output('otp-display', 'children'),
+        Output('time-left', 'children')],
+        [Input('interval-component', 'n_intervals')]
+    )
+    def update_otp(n_intervals):
+        if secret_key is None:
+            return "No QR code uploaded yet.", ""
+
+        # Generate the current OTP
+        totp = pyotp.TOTP(secret_key)
+        otp = totp.now()
+
+        # Calculate time left until OTP refresh
+        time_left = 30 - (int(time.time()) % 30)
+        return f"Current OTP: {otp}", f"Time left: {time_left} seconds"
+
+    # Callback to reset the QR code
+    @app.callback(
+        Output('upload-qr', 'contents', allow_duplicate=True),
+        Input('reset-button', 'n_clicks'),
+        prevent_initial_call=True
+    )
+    def reset_qr(n_clicks):
+        global secret_key
+        secret_key = None
+        return None
+
+# Run the app
+if __name__ == '__main__':
+    app.run_server(debug=True)
