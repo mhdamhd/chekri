@@ -11,4 +11,4 @@ openpyxl
 pyotp
 pyzbar
 Pillow
-zbar
+opencv-python

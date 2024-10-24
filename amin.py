@@ -2,12 +2,13 @@ import dash
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import pyotp
-from pyzbar.pyzbar import decode
+import cv2  # Import OpenCV
 from PIL import Image
 import time
 import os
 import base64
 import io
+import numpy as np
 
 # Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -16,6 +17,7 @@ app.title = "OTP Generator"
 
 # Global variable to store the secret key
 secret_key = None
+
 # App Layout
 app.layout = dbc.Container([
     dbc.Row([
@@ -58,19 +60,20 @@ app.layout = dbc.Container([
     ])
 ])
 layout = app.layout
+# Function to extract secret key from QR code using OpenCV
+def extract_secret_from_qr(image_data):
+    nparr = np.frombuffer(image_data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    detector = cv2.QRCodeDetector()
+    data, _, _ = detector.detectAndDecode(img)
 
+    if data and 'secret=' in data:
+        secret = data.split('secret=')[1].split('&')[0]
+        return secret
+    return None
+
+# Register callbacks
 def register_callbacks(app):
-    # Function to extract secret key from QR code
-    def extract_secret_from_qr(image_data):
-        image = Image.open(io.BytesIO(image_data))
-        decoded_data = decode(image)
-        if decoded_data:
-            qr_code_data = decoded_data[0].data.decode("utf-8")
-            secret = qr_code_data.split('secret=')[1].split('&')[0]
-            return secret
-        return None
-
-
     # Callback to handle QR code upload
     @app.callback(
         Output('output-message', 'children'),
@@ -119,6 +122,9 @@ def register_callbacks(app):
         global secret_key
         secret_key = None
         return None
+
+# Register callbacks
+# register_callbacks(app)
 
 # Run the app
 if __name__ == '__main__':
