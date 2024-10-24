@@ -100,7 +100,8 @@ def register_callbacks(app):
     @app.callback(
         [Output('amin-otp-display', 'children'),
         Output('amin-time-left', 'children')],
-        [Input('amin-interval-component', 'n_intervals')]
+        [Input('amin-interval-component', 'n_intervals')],
+        prevent_initial_call=True
     )
     def update_otp(n_intervals):
         if secret_key is None:
