@@ -26,7 +26,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             dcc.Upload(
-                id='upload-qr',
+                id='amin-upload-qr',
                 children=html.Div([
                     'Drag and Drop or ',
                     html.A('Select a QR Code File')
@@ -43,41 +43,43 @@ app.layout = dbc.Container([
                 },
                 multiple=False
             ),
-            html.Div(id='output-message', className='text-center mt-2'),
+            html.Div(id='amin-output-message', className='text-center mt-2'),
         ], width=6, className='offset-md-3')
     ]),
     dbc.Row([
         dbc.Col([
-            html.H2(id='otp-display', className='text-center mt-4'),
-            dcc.Interval(id='interval-component', interval=1000, n_intervals=0),
-            html.Div(id='time-left', className='text-center mt-2')
+            html.H2(id='amin-otp-display', className='text-center mt-4'),
+            dcc.Interval(id='amin-interval-component', interval=1000, n_intervals=0),
+            html.Div(id='amin-time-left', className='text-center mt-2')
         ])
     ]),
     dbc.Row([
         dbc.Col([
-            dbc.Button("Reset QR Code", id='reset-button', color='danger', className='mt-4'),
+            dbc.Button("Reset QR Code", id='amin-reset-button', color='danger', className='mt-4'),
         ], width=12, className='text-center')
     ])
 ])
 layout = app.layout
 # Function to extract secret key from QR code using OpenCV
-def extract_secret_from_qr(image_data):
-    nparr = np.frombuffer(image_data, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    detector = cv2.QRCodeDetector()
-    data, _, _ = detector.detectAndDecode(img)
-
-    if data and 'secret=' in data:
-        secret = data.split('secret=')[1].split('&')[0]
-        return secret
-    return None
 
 # Register callbacks
 def register_callbacks(app):
+
+    def extract_secret_from_qr(image_data):
+        nparr = np.frombuffer(image_data, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        detector = cv2.QRCodeDetector()
+        data, _, _ = detector.detectAndDecode(img)
+
+        if data and 'secret=' in data:
+            secret = data.split('secret=')[1].split('&')[0]
+            return secret
+        return None
+
     # Callback to handle QR code upload
     @app.callback(
-        Output('output-message', 'children'),
-        Input('upload-qr', 'contents'),
+        Output('amin-output-message', 'children'),
+        Input('amin-upload-qr', 'contents'),
         prevent_initial_call=True
     )
     def upload_qr(contents):
@@ -96,9 +98,9 @@ def register_callbacks(app):
 
     # Callback to update OTP and time left
     @app.callback(
-        [Output('otp-display', 'children'),
-        Output('time-left', 'children')],
-        [Input('interval-component', 'n_intervals')]
+        [Output('amin-otp-display', 'children'),
+        Output('amin-time-left', 'children')],
+        [Input('amin-interval-component', 'n_intervals')]
     )
     def update_otp(n_intervals):
         if secret_key is None:
@@ -114,8 +116,8 @@ def register_callbacks(app):
 
     # Callback to reset the QR code
     @app.callback(
-        Output('upload-qr', 'contents', allow_duplicate=True),
-        Input('reset-button', 'n_clicks'),
+        Output('amin-upload-qr', 'contents', allow_duplicate=True),
+        Input('amin-reset-button', 'n_clicks'),
         prevent_initial_call=True
     )
     def reset_qr(n_clicks):
