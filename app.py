@@ -37,11 +37,25 @@ sidebar = dbc.Nav(
 
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
-    dbc.Row([
-        dbc.Col(sidebar, width=2),
-        dbc.Col(html.Div(id='page-content'), width=10),
-    ])
+    dbc.Row(id='main-row')
 ], fluid=True)
+
+# Callback to manage sidebar visibility and page content
+@app.callback(
+    Output('main-row', 'children'),
+    Input('url', 'pathname')
+)
+def update_layout(pathname):
+    if pathname == '/amin':
+        # If the path is '/amin', hide the sidebar and show only the main content
+        return dbc.Col(html.Div(amin_layout), width=12)
+    else:
+        # For other paths, show the sidebar and main content
+        return [
+            dbc.Col(sidebar, width=2),
+            dbc.Col(html.Div(display_page(pathname)), width=10)
+        ]
+
 
 # Main callback to load the appropriate page
 @app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])
