@@ -89,7 +89,7 @@ def register_callbacks(app):
     def handle_qr_upload_or_reset(contents, n_clicks):
         ctx = dash.callback_context
 
-        if not ctx.triggered:
+        if not ctx.triggered or not ctx.triggered[0]['prop_id']:
             return dash.no_update, dash.no_update, dash.no_update
 
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
