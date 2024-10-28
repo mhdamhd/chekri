@@ -20,7 +20,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 # App Layout
 app.layout = dbc.Container([
     dbc.Row([
-        dbc.Col(html.H1("Refresh Google Sheet"), className="mb-4")
+        dbc.Col(html.H1("Ayoub for Work Permit"), className="mb-4")
     ]),
     dbc.Row([
         dbc.Col(
