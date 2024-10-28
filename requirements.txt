@@ -12,3 +12,4 @@ pyotp
 pyzbar
 Pillow
 opencv-python-headless
+gspread
