@@ -13,3 +13,4 @@ pyzbar
 Pillow
 opencv-python-headless
 gspread
+oauth2client
