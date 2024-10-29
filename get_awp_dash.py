@@ -81,7 +81,7 @@ def register_callbacks(app):
                     "Offer Letter Number": request.get("offerLetterNumber", ""),
                     "Excluded?": request.get("rpaExcluded", ""),
                     "Task Move In Date": date_part,
-                    "Days Count": days_part.strip("()"),  # Remove parentheses from days count
+                    "Days Count": days_part.strip("()").replace(" days", ""),  # Remove parentheses from days count
                     "Type": request.get("type", ""),
                     "Housemaid Status": request.get("housemaidStatus", ""),
                     "Is Live Out": request.get("isLiveOut", ""),
