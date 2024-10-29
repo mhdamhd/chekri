@@ -30,6 +30,12 @@ app.layout = dbc.Container([
     ]),
     dbc.Row([
         dbc.Col(
+            dbc.Button("Open Google Sheet", id="ayoub-open-sheet-button", color="secondary", href="https://docs.google.com/spreadsheets/d/1v1sIz1-Y90oX6tBTSnSGay_xtn_USIzd5VTIbptXcDc/edit?gid=0#gid=0", target="_blank"),
+            className="mb-4"
+        ),
+    ]),
+    dbc.Row([
+        dbc.Col(
             dcc.Loading(
                 id="ayoub-loading",
                 type="default",
@@ -74,7 +80,11 @@ def register_callbacks(app):
                     "Task Move In Date with Days Count": request.get("taskMoveInDateWithDaysCount", ""),
                     "Type": request.get("type", ""),
                     "Housemaid Status": request.get("housemaidStatus", ""),
-                    "Is Live Out": request.get("isLiveOut", "")
+                    "Is Live Out": request.get("isLiveOut", ""),
+                    "RPA Status": request.get("rpaStatus", ""),
+                    "Snoozed Tasks": ', '.join(request.get("snoozedTasks", [])),  # Convert list to comma-separated string
+                    "Task Modified Date": request.get("taskModifiedDate", ""),
+                    "RPA Portal": request.get("rpaPortal", "")
                 })
 
         # Create a DataFrame from the data
