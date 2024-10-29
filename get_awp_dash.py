@@ -66,6 +66,9 @@ def register_callbacks(app):
         data = []
         for task in res:
             for request in task['requests']:
+                task_move_in = request.get("taskMoveInDateWithDaysCount", "")
+                date_part, days_part = task_move_in.split(" - ") if " - " in task_move_in else ("", "")
+
                 data.append({
                     "Request ID": request.get("id", ""),
                     "Housemaid Name": request.get("housemaidName", ""),
@@ -77,7 +80,8 @@ def register_callbacks(app):
                     "Has Offer Letter Number?": "Yes" if request.get("offerLetterNumber") else "No",
                     "Offer Letter Number": request.get("offerLetterNumber", ""),
                     "Excluded?": request.get("rpaExcluded", ""),
-                    "Task Move In Date with Days Count": request.get("taskMoveInDateWithDaysCount", ""),
+                    "Task Move In Date": date_part,
+                    "Days Count": days_part.strip("()"),  # Remove parentheses from days count
                     "Type": request.get("type", ""),
                     "Housemaid Status": request.get("housemaidStatus", ""),
                     "Is Live Out": request.get("isLiveOut", ""),
