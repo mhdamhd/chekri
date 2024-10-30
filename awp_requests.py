@@ -1,9 +1,7 @@
 import requests
 
-def login():
+def login(payload):
     url = "https://erpbackendpro.maids.cc/public/login/jwt"
-
-    payload = "\"TW9oYW1tYWRNOjdBemNhJkdYVnJ2TXBTOjE3MjQ4NDQ2MDI4OTQ=\""
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
     'Accept': 'application/json, text/plain, */*',

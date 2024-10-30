@@ -58,8 +58,9 @@ def register_callbacks(app):
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
+        payload = os.environ.get('MHDMHD')
         # Get the token and response data
-        token = login()
+        token = login(payload)
         res = getAWP(token)
 
         # Prepare data for the DataFrame
