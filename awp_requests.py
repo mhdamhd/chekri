@@ -1,7 +1,11 @@
 import requests
 
 def login(payload):
+    print("payload before:")
+    print(payload)
     payload = f"\"{payload}\""
+    print("payload after:")
+    print(payload)
     url = "https://erpbackendpro.maids.cc/public/login/jwt"
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
