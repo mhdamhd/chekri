@@ -111,6 +111,17 @@ app.layout = dbc.Container([
                                 dbc.InputGroupText("Days for MV Urgency"),
                                 dbc.Input(id="mv-urgency-days", type="number", placeholder="Enter days", value=5),
                             ], className="mb-2"),
+                            html.H5("Payment added?", className="mb-3 text-secondary"),
+                            dbc.RadioItems(
+                                id='payment-added-toggle',
+                                options=[
+                                    {'label': 'Yes', 'value': 'Yes'},
+                                    {'label': 'No', 'value': 'No'}
+                                ],
+                                value='No',  # Default to 'No'
+                                inline=True,
+                                className="mb-3"
+                            )
 
                         ], md=6),
                         dbc.Col([
@@ -461,7 +472,8 @@ def register_callbacks(app):
         [Input("btn-combined-report", "n_clicks"),
         Input("btn-lawp-report", "n_clicks"),
         Input("btn-no-lawp-report", "n_clicks"),
-        Input("btn-top-priorities", "n_clicks")],
+        Input("btn-top-priorities", "n_clicks"),
+        Input("payment-added-toggle", "value")],
         [State('upload-data', 'contents'),
         State('upload-data', 'filename'),
         State("counter-filipina-live-in", "value"),
@@ -479,7 +491,7 @@ def register_callbacks(app):
         State("last-day-in-country", "value")],
         prevent_initial_call=True,
     )
-    def generate_report(n_clicks_combined, n_clicks_lawp, n_clicks_no_lawp, n_clicks_top_priorities, 
+    def generate_report(n_clicks_combined, n_clicks_lawp, n_clicks_no_lawp, n_clicks_top_priorities, payment_added,
                         contents, filename,
                         counter_filipina_live_in, counter_african_live_in, counter_ethiopian_live_in,
                         counter_filipina_live_out, counter_african_live_out,
@@ -503,7 +515,9 @@ def register_callbacks(app):
         offer_letter_threshold = offer_letter_threshold or 2
         # df['Offer Letter date'] = pd.to_datetime(df['Offer Letter date'], errors='coerce')
         today = pd.Timestamp.today()
-        df = df[((df['Payment added?'] == 'No'))]
+        df = df[(df['Payment added?'] == payment_added)]
+        # print(f'mhd, payment added {payment_added}')
+        # df = df[((df['Payment added?'] == 'No'))]
         # df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No') & (df['Payment added?'] == 'No'))]
         # df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No')) | (((df['MB?'] == 'Yes') | (df['Has Contract MB?'] == 'Yes')) & (((today - df['Offer Letter date']) <= timedelta(days=offer_letter_threshold))))]
         priority_counters = {
@@ -696,6 +710,6 @@ def register_callbacks(app):
         if contents is None:
             return True, True, True
         return False, False, False
-
+# register_callbacks(app)
 if __name__ == '__main__':
     app.run_server(debug=True, port=7001)
