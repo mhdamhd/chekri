@@ -35,6 +35,7 @@ def login(username, password):
     if response.status_code == 200:
         # Step 1: Extract the token from the headers
         token = response.headers.get('token')
+        token = token.replace("Bearer ", "")
 
         if token:
             print("Logged in successfully")
