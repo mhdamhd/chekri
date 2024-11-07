@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from awp_requests import login, getAWP
+from awp_requests import login, getAWP, verifyOtp
 
 # Google Sheet ID and Service Account Key
 SPREADSHEET_ID = '1v1sIz1-Y90oX6tBTSnSGay_xtn_USIzd5VTIbptXcDc'
@@ -21,6 +21,12 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col(html.H1("Ayoub for Work Permit"), className="mb-4")
+    ]),
+    dbc.Row([
+        dbc.Col(
+            dcc.Input(id="ayoub-otp-input", type="text", placeholder="Enter OTP code"),
+            className="mb-4"
+        ),
     ]),
     dbc.Row([
         dbc.Col(
@@ -50,7 +56,7 @@ layout = app.layout
 def register_callbacks(app):
         
     # Helper Function to Update Google Sheet
-    def update_google_sheet():
+    def update_google_sheet(otp_code):
         # Authenticate and connect to Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         # creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
@@ -61,6 +67,9 @@ def register_callbacks(app):
         payload = os.environ.get('MHDMHD')
         # Get the token and response data
         token = login(payload)
+        verified = verifyOtp(token, otp_code)
+        if not verified:
+            return "Not verified"
         res = getAWP(token)
 
         # Prepare data for the DataFrame
@@ -108,12 +117,13 @@ def register_callbacks(app):
     @app.callback(
         Output("ayoub-output", "children"),
         Input("ayoub-refresh-button", "n_clicks"),
+        State("ayoub-otp-input", "value"),
         prevent_initial_call=True
     )
-    def refresh_google_sheet(n_clicks):
+    def refresh_google_sheet(n_clicks, otp_code):
         try:
             # Update the Google Sheet
-            message = update_google_sheet()
+            message = update_google_sheet(otp_code)
             return message
         except Exception as e:
             # Return the error message

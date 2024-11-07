@@ -19,6 +19,7 @@ def login(payload):
     'Priority': 'u=0',
     'TE': 'trailers'
     }
+    print("logging in...")
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
@@ -34,6 +35,30 @@ def login(payload):
         print(f"Failed to login, status code: {response.status_code}")
 
     return f"{token}"
+
+def verifyOtp(token, otp_code):
+    url = f"https://erpbackendpro.maids.cc/public/login/validate-totp?code={otp_code}"
+
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Content-Type': 'application/json;charset=utf-8',
+    'Origin': 'https://erp.maids.cc',
+    'Connection': 'keep-alive',
+    'Referer': 'https://erp.maids.cc/',
+    'Cookie': f'authTokenProduction={token}',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-site',
+    'Priority': 'u=0',
+    'TE': 'trailers'
+    }
+
+    response = requests.request("POST", url, headers=headers)
+    return response.text == "\"Validated\""
+
 
 def getAWP(token):
     url = "https://erpbackendpro.maids.cc/visa/newRequest/tasks?search=&taskName=Create%20Regular%20Offer%20Letter"
