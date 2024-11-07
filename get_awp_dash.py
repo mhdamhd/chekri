@@ -24,6 +24,17 @@ app.layout = dbc.Container([
     ]),
     dbc.Row([
         dbc.Col(
+            dcc.Input(id="ayoub-username-input", type="text", placeholder="Enter Username"),
+            className="mb-4"
+        ),
+        dbc.Col(
+            dcc.Input(id="ayoub-password-input", type="password", placeholder="Enter Password"),
+            className="mb-4"
+        ),
+        
+    ]),
+    dbc.Row([
+        dbc.Col(
             dcc.Input(id="ayoub-otp-input", type="text", placeholder="Enter OTP code"),
             className="mb-4"
         ),
@@ -56,7 +67,7 @@ layout = app.layout
 def register_callbacks(app):
         
     # Helper Function to Update Google Sheet
-    def update_google_sheet(otp_code):
+    def update_google_sheet(username, password, otp_code):
         # Authenticate and connect to Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         # creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
@@ -64,9 +75,8 @@ def register_callbacks(app):
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
-        payload = os.environ.get('MHDMHD')
         # Get the token and response data
-        token = login(payload)
+        token = login(username, password)
         verified = verifyOtp(token, otp_code)
         if not verified:
             return "Not verified"
@@ -117,13 +127,15 @@ def register_callbacks(app):
     @app.callback(
         Output("ayoub-output", "children"),
         Input("ayoub-refresh-button", "n_clicks"),
+        State("ayoub-username-input", "value"),
+        State("ayoub-password-input", "value"),
         State("ayoub-otp-input", "value"),
         prevent_initial_call=True
     )
-    def refresh_google_sheet(n_clicks, otp_code):
+    def refresh_google_sheet(n_clicks,username, password, otp_code):
         try:
             # Update the Google Sheet
-            message = update_google_sheet(otp_code)
+            message = update_google_sheet(username, password, otp_code)
             return message
         except Exception as e:
             # Return the error message

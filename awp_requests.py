@@ -1,7 +1,16 @@
+import base64
+import time
 import requests
 
-def login(payload):
-    payload = f"\"{payload}\""
+def login(username, password):
+    timestamp = str(int(time.time() * 1000))
+
+    # Format the string as "username:password:timestamp"
+    credential_string = f"{username}:{password}:{timestamp}"
+    # Encode the string in Base64
+    payload = base64.b64encode(credential_string.encode("utf-8")).decode("utf-8")
+    payload = f'"{payload}"'
+    
     url = "https://erpbackendpro.maids.cc/public/login/jwt"
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
