@@ -99,12 +99,12 @@ def register_callbacks(app):
 
         # Prepare stats table data and columns with Approved/Rejected breakdown
         columns = [
-            {"name": "Category", "id": "Category"},
-            {"name": "Approved", "id": "Approved"},
-            {"name": "Rejected", "id": "Rejected"},
+            {"name": "Type", "id": "Type"},
+            {"name": "Mohre", "id": "Mohre"},
+            {"name": "AIO", "id": "AIO"},
             {"name": "Total", "id": "Total"}
         ]
-        data = [{"Category": k, "Approved": v['Approved'], "Rejected": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
+        data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
         
         return data, columns
 
