@@ -12,3 +12,5 @@ __pycache__/replacement_distribution_remote.cpython-312.pyc
 service_account_key.json
 __pycache__/amin.cpython-312.pyc
 __pycache__/awp_requests.cpython-310.pyc
+__pycache__/getParameters.cpython-310.pyc
+__pycache__/postRequest.cpython-310.pyc
