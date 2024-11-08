@@ -81,7 +81,7 @@ def display_page(pathname):
     elif pathname == '/awp':
         return awp_layout
     elif pathname == '/mohre_app_status':
-        return awp_layout
+        return mohre_layout
     elif pathname == '/amin':
         return amin_layout
     else:
