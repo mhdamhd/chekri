@@ -115,6 +115,7 @@ app.layout = dbc.Container([
                             dbc.RadioItems(
                                 id='payment-added-toggle',
                                 options=[
+                                    {'label': 'Combined', 'value': 'Combined'},
                                     {'label': 'Yes', 'value': 'Yes'},
                                     {'label': 'No', 'value': 'No'}
                                 ],
@@ -261,7 +262,8 @@ african_countries = [
     "Zimbabwe", "Zimbabwean", "Zimbabweans", "Zimbabwean (adj.)"
 ]
     # Define priority names for display
-
+approved_strings = [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted']
+rejected_strings = [' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' ']
 
 def register_callbacks(app):
 
@@ -414,6 +416,12 @@ def register_callbacks(app):
         
         else:
             df = df[df['Docs status'].isin(docs_status_list)]
+
+        replacement_dict = {status: 'Rejected' for status in rejected_strings}
+        replacement_dict.update({status: 'Approved' for status in approved_strings})
+
+        # Replace values in the 'Docs status' column
+        df['Docs status'] = df['Docs status'].replace(replacement_dict)
         
         priority_names = get_priority_names(mv_urgency_days, last_day_in_country)
         df['Priority number'] = df.apply(lambda row: assign_priority(row, priority_counters, priority_thresholds, mv_urgency_days, last_day_in_country), axis=1)
@@ -421,7 +429,7 @@ def register_callbacks(app):
         
         df_prioritized = df[df['Priority number'].notna()]
         output_df = df_prioritized.sort_values(by=['Priority number', 'Been in the table for (in days)'], ascending=[True, False])    
-        output_df = output_df[['Priority number', 'Request ID', 'Housemaid Name', 'Housemaid Nationality', 'Housemaid Type', 'Gender', 'Priority Name', 'Been in the table for (in days)']]
+        output_df = output_df[['Priority number', 'Request ID', 'Housemaid Name', 'Housemaid Nationality', 'Housemaid Type', 'Gender', 'Priority Name', 'Been in the table for (in days)', 'Docs status']]
 
         # output_df = output_df.sort_values('Priority number')
         
@@ -515,7 +523,8 @@ def register_callbacks(app):
         offer_letter_threshold = offer_letter_threshold or 2
         # df['Offer Letter date'] = pd.to_datetime(df['Offer Letter date'], errors='coerce')
         today = pd.Timestamp.today()
-        df = df[(df['Payment added?'] == payment_added)]
+        if payment_added in ["Yes", "No"]:
+         df = df[(df['Payment added?'] == payment_added)]
         # print(f'mhd, payment added {payment_added}')
         # df = df[((df['Payment added?'] == 'No'))]
         # df = df[((df['MB?'] == 'No') & (df['Has Contract MB?'] == 'No') & (df['Payment added?'] == 'No'))]
@@ -541,9 +550,9 @@ def register_callbacks(app):
         last_day_in_country = last_day_in_country or 5
 
         if button_id == "btn-combined-report":
-            accepted_df, accepted_stats = process_dataframe(df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted'], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            rejected_df, rejected_stats = process_dataframe(df, [' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            combined_df, _ = process_dataframe(df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted', ' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            accepted_df, accepted_stats = process_dataframe(df, approved_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            rejected_df, rejected_stats = process_dataframe(df, rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            combined_df, _ = process_dataframe(df, approved_strings + rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
             # combined_df = pd.concat([accepted_df, rejected_df]).sort_values('Priority number')
 
             # Exclude African maids, but keep Ethiopians
@@ -587,9 +596,9 @@ def register_callbacks(app):
         
         elif button_id == "btn-lawp-report":
             lawp_df = df[df['Outcome'] == 'LAWP']
-            accepted_df, accepted_stats = process_dataframe(lawp_df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted'], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            rejected_df, rejected_stats = process_dataframe(lawp_df, [' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            combined_df, _ = process_dataframe(df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted', ' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            accepted_df, accepted_stats = process_dataframe(lawp_df, approved_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            rejected_df, rejected_stats = process_dataframe(lawp_df, rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            combined_df, _ = process_dataframe(df, approved_strings + rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
             # combined_df = pd.concat([accepted_df, rejected_df]).sort_values('Priority number')
             
             # Exclude African maids, but keep Ethiopians
@@ -628,9 +637,9 @@ def register_callbacks(app):
         
         elif button_id == "btn-no-lawp-report":
             non_lawp_df = df[df['Outcome'] != 'LAWP']
-            accepted_df, accepted_stats = process_dataframe(non_lawp_df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted'], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            rejected_df, rejected_stats = process_dataframe(non_lawp_df, [' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            combined_df, _ = process_dataframe(df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted', ' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            accepted_df, accepted_stats = process_dataframe(non_lawp_df, approved_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            rejected_df, rejected_stats = process_dataframe(non_lawp_df, rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            combined_df, _ = process_dataframe(df, approved_strings + rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
             # combined_df = pd.concat([accepted_df, rejected_df]).sort_values('Priority number')
             
             # Exclude African maids, but keep Ethiopians
@@ -669,9 +678,9 @@ def register_callbacks(app):
         elif button_id == "btn-top-priorities":
             # Filter for top 4 priorities
             non_lawp_df = df[df['Outcome'] != 'LAWP']
-            accepted_df, accepted_stats = process_dataframe(non_lawp_df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted'], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            rejected_df, rejected_stats = process_dataframe(non_lawp_df, [' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
-            combined_df, _ = process_dataframe(df, [' Approved', 'Approved', 'Approved ', ' Approved ', 'Maid is already verified and accepted', ' Rejected', 'Rejected', 'Rejected ', ' Rejected ', 'NA', ' '], priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            accepted_df, accepted_stats = process_dataframe(non_lawp_df, approved_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            rejected_df, rejected_stats = process_dataframe(non_lawp_df, rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
+            combined_df, _ = process_dataframe(df, approved_strings + rejected_strings, priority_counters.copy(), priority_thresholds, mv_urgency_days, last_day_in_country)
             # combined_df = pd.concat([accepted_df, rejected_df]).sort_values('Priority number')
 
             accepted_df = accepted_df[accepted_df['Priority number'].isin([1, 2, 3, 4, 5])]
