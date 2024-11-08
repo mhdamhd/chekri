@@ -6,10 +6,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from priorities import african_countries
 
-
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-
 
 app.layout = dbc.Container([
     html.H2("Maid Prioritization Statistics"),
@@ -22,7 +19,7 @@ app.layout = dbc.Container([
             'textAlign': 'center', 'margin': '10px'
         }
     ),
-    html.Div(id='breakdown-output-data-upload'),
+    html.Div(id='breakdown-upload-message'),
     dash_table.DataTable(id='breakdown-stats-table', style_table={'overflowX': 'auto'}),
     dbc.Button("Download Table as Excel", id="breakdown-download-button", color="primary", className="mt-3"),
     dcc.Download(id="breakdown-download-excel")
@@ -30,15 +27,19 @@ app.layout = dbc.Container([
 layout = app.layout
 
 def register_callbacks(app):
-        
     def parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country):
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
-        df = pd.read_excel(io.BytesIO(decoded), sheet_name='Combined')
-        
+
+        # Try loading "Combined" sheet, or fallback to the first sheet
+        try:
+            df = pd.read_excel(io.BytesIO(decoded), sheet_name='Combined')
+        except ValueError:
+            df = pd.read_excel(io.BytesIO(decoded), sheet_name=0)  # Load the first sheet if "Combined" is not found
+
         if df is None:
             return None, None
-    
+
         # Define conditions with new property labels
         conditions = [
             ("MV", (df['Housemaid Type'] == 'MV')),
@@ -83,19 +84,20 @@ def register_callbacks(app):
     @app.callback(
         Output('breakdown-stats-table', 'data'),
         Output('breakdown-stats-table', 'columns'),
+        Output('breakdown-upload-message', 'children'),
         Input('breakdown-upload-data', 'contents'),
         State('breakdown-upload-data', 'filename')
     )
     def update_output(contents, filename):
         if contents is None:
-            return [], []
+            return [], [], "No file uploaded."
 
         mv_urgency_days = 7  # Example value for mv_urgency_days
         last_day_in_country = 10  # Example value for last_day_in_country
         
         df, stats = parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country)
         if stats is None:
-            return [], []
+            return [], [], "Failed to process file. Please check the format."
 
         # Prepare stats table data and columns with Approved/Rejected breakdown
         columns = [
@@ -106,7 +108,9 @@ def register_callbacks(app):
         ]
         data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
         
-        return data, columns
+        # Success message
+        message = "File successfully uploaded and processed."
+        return data, columns, message
 
     # Callback to download the displayed table as Excel
     @app.callback(
@@ -141,5 +145,5 @@ def register_callbacks(app):
 
         return dcc.send_bytes(output.getvalue(), "Prioritization_Statistics.xlsx")
 
-    if __name__ == '__main__':
-        app.run_server(debug=True)
+if __name__ == '__main__':
+    app.run_server(debug=True)
