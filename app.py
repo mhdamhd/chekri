@@ -12,6 +12,7 @@ from merge_priorities import layout as merge_priorities_layout, register_callbac
 from amin import layout as amin_layout, register_callbacks as amin_callbacks
 from get_awp_dash import layout as awp_layout, register_callbacks as awp_callbacks
 from mohre_application_status import layout as mohre_layout, register_callbacks as mohre_callbacks
+from combined_stats_table import layout as stats_layout, register_callbacks as stats_callbacks
 # Add other apps as needed
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -29,6 +30,7 @@ sidebar = dbc.Nav(
         dbc.NavLink("Replacement Distribution", href="/distribution_remote", active="exact"),
         dbc.NavLink("Links Distribution Remote", href="/links_remote", active="exact"),
         dbc.NavLink("Merge Priorities", href="/merge_priorities", active="exact"),
+        dbc.NavLink("Priorities Stats", href="/priorities_stats", active="exact"),
         dbc.NavLink("AWP", href="/awp", active="exact"),
         dbc.NavLink("Mohre App-Status", href="/mohre_app_status", active="exact"),
         dbc.NavLink("Amin", href="/amin", active="exact"),
@@ -78,6 +80,8 @@ def display_page(pathname):
         return links_distribution_remote_layout
     elif pathname == '/merge_priorities':
         return merge_priorities_layout
+    elif pathname == '/priorities_stats':
+        return stats_layout
     elif pathname == '/awp':
         return awp_layout
     elif pathname == '/mohre_app_status':
@@ -97,6 +101,7 @@ quota_distribution_remote_callbacks(app)
 replacement_distribution_remote_callbacks(app)
 links_distribution_remote_callbacks(app)
 merge_priorities_layout_callbacks(app)
+stats_callbacks(app)
 awp_callbacks(app)
 mohre_callbacks(app)
 amin_callbacks(app)
