@@ -14,3 +14,5 @@ Pillow
 opencv-python-headless
 gspread
 oauth2client
+beautifulsoup4  # For parsing HTML with BeautifulSoup
+requests  # For making HTTP requests
