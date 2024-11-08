@@ -1,7 +1,7 @@
 import json
 import os
 import dash
-from dash import html, dcc, Input, Output, State
+from dash import html, dcc, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
 import pandas as pd
 import gspread
@@ -31,17 +31,10 @@ app.layout = dbc.Container([
             dcc.Input(id="ayoub-password-input", type="password", placeholder="Enter Password"),
             className="mb-4"
         ),
-        
     ]),
     dbc.Row([
         dbc.Col(
-            dcc.Input(id="ayoub-otp-input", type="text", placeholder="Enter OTP code"),
-            className="mb-4"
-        ),
-    ]),
-    dbc.Row([
-        dbc.Col(
-            dbc.Button("Refresh the Table", id="ayoub-refresh-button", color="primary", n_clicks=0),
+            dbc.Button("Login and Refresh Table", id="ayoub-login-button", color="primary", n_clicks=0),
             className="mb-4"
         ),
     ]),
@@ -56,18 +49,28 @@ app.layout = dbc.Container([
             dcc.Loading(
                 id="ayoub-loading",
                 type="default",
-                children=html.Div(id="ayoub-output", children="Click the button to refresh the table.")
+                children=html.Div(id="ayoub-output", children="Click the login button to refresh the table.")
             )
         )
-    ])
+    ]),
+    # OTP Modal
+    dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Enter OTP")),
+        dbc.ModalBody(
+            dcc.Input(id="ayoub-otp-input", type="text", placeholder="Enter OTP code")
+        ),
+        dbc.ModalFooter(
+            dbc.Button("Submit OTP", id="ayoub-submit-otp-button", className="ms-auto", n_clicks=0)
+        ),
+    ], id="ayoub-otp-modal", is_open=False)
 ], fluid=True)
 layout = app.layout
-
+# Global token storage
+app_token = None
 
 def register_callbacks(app):
-        
     # Helper Function to Update Google Sheet
-    def update_google_sheet(username, password, otp_code):
+    def update_google_sheet(token):
         # Authenticate and connect to Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         # creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
@@ -75,11 +78,7 @@ def register_callbacks(app):
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
-        # Get the token and response data
-        token = login(username, password)
-        verified = verifyOtp(token, otp_code)
-        if not verified:
-            return "Not verified"
+        # Get the response data
         res = getAWP(token)
 
         # Prepare data for the DataFrame
@@ -123,23 +122,52 @@ def register_callbacks(app):
 
         return "Google Sheet has been successfully updated."
 
-    # Callback to Refresh Google Sheet
+    # Combined Callback for Login and OTP Verification
     @app.callback(
+        Output("ayoub-otp-modal", "is_open"),
         Output("ayoub-output", "children"),
-        Input("ayoub-refresh-button", "n_clicks"),
+        Input("ayoub-login-button", "n_clicks"),
+        Input("ayoub-submit-otp-button", "n_clicks"),
         State("ayoub-username-input", "value"),
         State("ayoub-password-input", "value"),
         State("ayoub-otp-input", "value"),
         prevent_initial_call=True
     )
-    def refresh_google_sheet(n_clicks,username, password, otp_code):
-        try:
-            # Update the Google Sheet
-            message = update_google_sheet(username, password, otp_code)
-            return message
-        except Exception as e:
-            # Return the error message
-            return f"An error occurred: {e}"
+    def handle_login_and_otp(login_clicks, otp_clicks, username, password, otp_code):
+        global app_token
+        ctx = callback_context
+        if not ctx.triggered:
+            return False, ""
+        
+        # Identify which button was clicked
+        triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+        # Login button was clicked
+        if triggered_id == "ayoub-login-button":
+            try:
+                app_token = login(username, password)
+                if app_token:
+                    return True, "Login successful. Please enter the OTP."
+                else:
+                    return False, "Login failed. Please check your credentials."
+            except Exception as e:
+                return False, f"An error occurred: {e}"
+
+        # OTP submit button was clicked
+        elif triggered_id == "ayoub-submit-otp-button":
+            try:
+                verified = verifyOtp(app_token, otp_code)
+                if not verified:
+                    # OTP failed, reopen modal
+                    return True, "OTP verification failed. Please try again."
+                
+                # OTP successful, update Google Sheet and close modal
+                message = update_google_sheet(app_token)
+                return False, message  # Close the modal and display the message
+            except Exception as e:
+                return False, f"An error occurred: {e}"
+
+        return False, ""
 
 # Run the app
 if __name__ == "__main__":
