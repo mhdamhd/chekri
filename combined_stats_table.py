@@ -10,6 +10,13 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = dbc.Container([
     html.H2("Maid Prioritization Statistics"),
+    
+    # Quota input field
+    dbc.Row([
+        dbc.Col(html.Label("Quota We Have"), width="auto"),
+        dbc.Col(dcc.Input(id="quota-input", type="number", value=100, style={"width": "100px"}), width="auto"),
+    ], className="mb-3"),
+
     dcc.Upload(
         id='breakdown-upload-data',
         children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
@@ -23,6 +30,7 @@ app.layout = dbc.Container([
     
     # Checklist for filtering table categories
     dcc.Checklist(id="category-checklist", inline=False, style={'textAlign': 'left'}),
+    html.Div(id="remaining-quota", style={"fontWeight": "bold", "margin-top": "5px", "margin-bottom": "5px"}),
     
     # Store to hold the original table data for filtering
     dcc.Store(id='original-table-data'),
@@ -37,8 +45,12 @@ app.layout = dbc.Container([
         }
     ),
     
+    # Download button with margin below
     dbc.Button("Download Table as Excel", id="breakdown-download-button", color="primary", className="mt-3", style={"margin-bottom": "50px"}),
-    dcc.Download(id="breakdown-download-excel")
+    dcc.Download(id="breakdown-download-excel"),
+    
+    # Display remaining quota below the table
+    
 ], fluid=True)
 layout = app.layout
 
@@ -95,13 +107,15 @@ def register_callbacks(app):
         Output('category-checklist', 'options'),
         Output('category-checklist', 'value'),  # Default selected values
         Output('original-table-data', 'data'),  # Store original data
+        Output('remaining-quota', 'children'),  # Display remaining quota
         Input('breakdown-upload-data', 'contents'),
         Input('category-checklist', 'value'),
+        Input('quota-input', 'value'),  # Get the quota input
         State('breakdown-upload-data', 'filename'),
         State('original-table-data', 'data'),
         prevent_initial_call=True
     )
-    def update_table(contents, selected_categories, filename, original_data):
+    def update_table(contents, selected_categories, quota, filename, original_data):
         trigger = callback_context.triggered[0]['prop_id'].split('.')[0]
 
         if trigger == 'breakdown-upload-data' and contents is not None:
@@ -111,7 +125,7 @@ def register_callbacks(app):
             
             df, stats = parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country)
             if stats is None:
-                return [], [], "Failed to process file. Please check the format.", [], [], []
+                return [], [], "Failed to process file. Please check the format.", [], [], [], ""
 
             columns = [
                 {"name": "Type", "id": "Type"},
@@ -120,13 +134,24 @@ def register_callbacks(app):
                 {"name": "Total", "id": "Total"}
             ]
             data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
-            
+            # Calculate the initial total row and add it to data
+            total_row = {
+                "Type": "Total",
+                "Mohre": sum(item['Mohre'] for item in data),
+                "AIO": sum(item['AIO'] for item in data),
+                "Total": sum(item['Total'] for item in data)
+            }
+            data.append(total_row)
+                    
             # Exclude "Total" from checklist options
             options = [{"label": k, "value": k} for k in stats.keys()]
             default_values = [k for k in stats.keys()]  # Select all options by default
 
+            # Calculate the initial remaining quota
+            total_aio = sum(item['AIO'] for item in data)
+            remaining_quota = quota - total_aio
             message = "File successfully uploaded and processed."
-            return data, columns, message, options, default_values, data
+            return data, columns, message, options, default_values, data, f"Remaining Quota: {remaining_quota}"
 
         elif trigger == 'category-checklist' and selected_categories is not None:
             # Filter original data based on selected categories
@@ -141,9 +166,12 @@ def register_callbacks(app):
             }
             filtered_data.append(total_row)
 
-            return filtered_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+            # Update remaining quota
+            remaining_quota = quota - total_row["AIO"]
 
-        return [], [], "No file uploaded.", [], [], []
+            return filtered_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, f"Remaining Quota: {remaining_quota}"
+
+        return [], [], "No file uploaded.", [], [], [], ""
     
 if __name__ == '__main__':
     app.run_server(debug=True)
