@@ -134,6 +134,10 @@ def register_callbacks(app):
                 {"name": "Total", "id": "Total"}
             ]
             data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
+            # Calculate the initial remaining quota
+            total_aio = sum(item['AIO'] for item in data)
+            print(f"quota: {quota}, total_aio: {total_aio}")
+            remaining_quota = quota - total_aio
             # Calculate the initial total row and add it to data
             total_row = {
                 "Type": "Total",
@@ -147,9 +151,6 @@ def register_callbacks(app):
             options = [{"label": k, "value": k} for k in stats.keys()]
             default_values = [k for k in stats.keys()]  # Select all options by default
 
-            # Calculate the initial remaining quota
-            total_aio = sum(item['AIO'] for item in data)
-            remaining_quota = quota - total_aio
             message = "File successfully uploaded and processed."
             return data, columns, message, options, default_values, data, f"Remaining Quota: {remaining_quota}"
 
@@ -171,7 +172,12 @@ def register_callbacks(app):
 
             return filtered_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, f"Remaining Quota: {remaining_quota}"
 
-        return [], [], "No file uploaded.", [], [], [], ""
-    
+        elif trigger == 'quota-input':
+            # Recalculate remaining quota based on current quota and total AIO in original data
+            total_aio = sum(row['AIO'] for row in original_data if row['Type'] != "Total")
+            remaining_quota = quota - total_aio
+            return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, f"Remaining Quota: {remaining_quota}"
+            return [], [], "No file uploaded.", [], [], [], ""
+            
 if __name__ == '__main__':
     app.run_server(debug=True)
