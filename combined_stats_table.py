@@ -1,7 +1,7 @@
 import base64
 import io
 import dash
-from dash import dcc, html, Input, Output, State, dash_table
+from dash import dcc, html, Input, Output, State, dash_table, callback_context
 import dash_bootstrap_components as dbc
 import pandas as pd
 from priorities import african_countries
@@ -20,8 +20,24 @@ app.layout = dbc.Container([
         }
     ),
     html.Div(id='breakdown-upload-message'),
-    dash_table.DataTable(id='breakdown-stats-table', style_table={'overflowX': 'auto'}),
-    dbc.Button("Download Table as Excel", id="breakdown-download-button", color="primary", className="mt-3"),
+    
+    # Checklist for filtering table categories
+    dcc.Checklist(id="category-checklist", inline=False, style={'textAlign': 'left'}),
+    
+    # Store to hold the original table data for filtering
+    dcc.Store(id='original-table-data'),
+    
+    dash_table.DataTable(
+        id='breakdown-stats-table', 
+        style_table={'overflowX': 'auto'},
+        style_cell={'textAlign': 'left', 'padding': '10px'},
+        style_header={
+            'backgroundColor': 'lightgrey',
+            'fontWeight': 'bold'
+        }
+    ),
+    
+    dbc.Button("Download Table as Excel", id="breakdown-download-button", color="primary", className="mt-3", style={"margin-bottom": "50px"}),
     dcc.Download(id="breakdown-download-excel")
 ], fluid=True)
 layout = app.layout
@@ -31,16 +47,14 @@ def register_callbacks(app):
         content_type, content_string = contents.split(',')
         decoded = base64.b64decode(content_string)
 
-        # Try loading "Combined" sheet, or fallback to the first sheet
         try:
             df = pd.read_excel(io.BytesIO(decoded), sheet_name='Combined')
         except ValueError:
-            df = pd.read_excel(io.BytesIO(decoded), sheet_name=0)  # Load the first sheet if "Combined" is not found
+            df = pd.read_excel(io.BytesIO(decoded), sheet_name=0)
 
         if df is None:
             return None, None
 
-        # Define conditions with new property labels
         conditions = [
             ("MV", (df['Housemaid Type'] == 'MV')),
             ("CC landed in dubai", (df['Priority number'].isin([6, 7, 8, 10, 11, 14, 15]) & (df['Housemaid Type'] == 'CC'))),
@@ -61,12 +75,10 @@ def register_callbacks(app):
             ("LAWP Other", (df['Priority number'] == 16) & (~df['Housemaid Nationality'].isin(['Ethiopian', 'Indian'])))
         ]
 
-        # Assign "New Property" column based on conditions
-        df['New Property'] = None  # Initialize column
+        df['New Property'] = None
         for label, condition in conditions:
             df.loc[condition, 'New Property'] = label
 
-        # Count stats with Approved/Rejected split
         stats = {}
         for label, _ in conditions:
             approved_count = len(df[(df['New Property'] == label) & (df['Docs status'] == 'Approved')])
@@ -74,76 +86,64 @@ def register_callbacks(app):
             total_count = approved_count + rejected_count
             stats[label] = {'Approved': approved_count, 'Rejected': rejected_count, 'Total': total_count}
 
-        stats['Total'] = {
-            'Approved': sum(item['Approved'] for item in stats.values()),
-            'Rejected': sum(item['Rejected'] for item in stats.values()),
-            'Total': sum(item['Total'] for item in stats.values())
-        }
         return df, stats
 
     @app.callback(
         Output('breakdown-stats-table', 'data'),
         Output('breakdown-stats-table', 'columns'),
         Output('breakdown-upload-message', 'children'),
+        Output('category-checklist', 'options'),
+        Output('category-checklist', 'value'),  # Default selected values
+        Output('original-table-data', 'data'),  # Store original data
         Input('breakdown-upload-data', 'contents'),
-        State('breakdown-upload-data', 'filename')
-    )
-    def update_output(contents, filename):
-        if contents is None:
-            return [], [], "No file uploaded."
-
-        mv_urgency_days = 7  # Example value for mv_urgency_days
-        last_day_in_country = 10  # Example value for last_day_in_country
-        
-        df, stats = parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country)
-        if stats is None:
-            return [], [], "Failed to process file. Please check the format."
-
-        # Prepare stats table data and columns with Approved/Rejected breakdown
-        columns = [
-            {"name": "Type", "id": "Type"},
-            {"name": "Mohre", "id": "Mohre"},
-            {"name": "AIO", "id": "AIO"},
-            {"name": "Total", "id": "Total"}
-        ]
-        data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
-        
-        # Success message
-        message = "File successfully uploaded and processed."
-        return data, columns, message
-
-    # Callback to download the displayed table as Excel
-    @app.callback(
-        Output("breakdown-download-excel", "data"),
-        Input("breakdown-download-button", "n_clicks"),
-        State('breakdown-upload-data', 'contents'),
+        Input('category-checklist', 'value'),
         State('breakdown-upload-data', 'filename'),
+        State('original-table-data', 'data'),
         prevent_initial_call=True
     )
-    def download_table_as_excel(n_clicks, contents, filename):
-        if contents is None:
-            return None
+    def update_table(contents, selected_categories, filename, original_data):
+        trigger = callback_context.triggered[0]['prop_id'].split('.')[0]
 
-        mv_urgency_days = 7  # Example value for mv_urgency_days
-        last_day_in_country = 10  # Example value for last_day_in_country
-        
-        df, stats = parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country)
-        if stats is None:
-            return None
+        if trigger == 'breakdown-upload-data' and contents is not None:
+            # Process file upload
+            mv_urgency_days = 7
+            last_day_in_country = 10
+            
+            df, stats = parse_and_filter_data(contents, filename, mv_urgency_days, last_day_in_country)
+            if stats is None:
+                return [], [], "Failed to process file. Please check the format.", [], [], []
 
-        # Convert stats to DataFrame for download
-        stats_df = pd.DataFrame([
-            {"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']}
-            for k, v in stats.items()
-        ])
-        
-        # Export the DataFrame to Excel
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            stats_df.to_excel(writer, index=False, sheet_name="Statistics")
-        output.seek(0)
+            columns = [
+                {"name": "Type", "id": "Type"},
+                {"name": "Mohre", "id": "Mohre"},
+                {"name": "AIO", "id": "AIO"},
+                {"name": "Total", "id": "Total"}
+            ]
+            data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
+            
+            # Exclude "Total" from checklist options
+            options = [{"label": k, "value": k} for k in stats.keys()]
+            default_values = [k for k in stats.keys()]  # Select all options by default
 
-        return dcc.send_bytes(output.getvalue(), "Prioritization_Statistics.xlsx")
+            message = "File successfully uploaded and processed."
+            return data, columns, message, options, default_values, data
 
+        elif trigger == 'category-checklist' and selected_categories is not None:
+            # Filter original data based on selected categories
+            filtered_data = [row for row in original_data if row['Type'] in selected_categories]
+            
+            # Calculate the dynamic total based on filtered data
+            total_row = {
+                "Type": "Total",
+                "Mohre": sum(row['Mohre'] for row in filtered_data),
+                "AIO": sum(row['AIO'] for row in filtered_data),
+                "Total": sum(row['Total'] for row in filtered_data)
+            }
+            filtered_data.append(total_row)
+
+            return filtered_data, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+        return [], [], "No file uploaded.", [], [], []
+    
 if __name__ == '__main__':
     app.run_server(debug=True)
