@@ -136,7 +136,6 @@ def register_callbacks(app):
             data = [{"Type": k, "Mohre": v['Approved'], "AIO": v['Rejected'], "Total": v['Total']} for k, v in stats.items()]
             # Calculate the initial remaining quota
             total_aio = sum(item['AIO'] for item in data)
-            print(f"quota: {quota}, total_aio: {total_aio}")
             remaining_quota = quota - total_aio
             # Calculate the initial total row and add it to data
             total_row = {
