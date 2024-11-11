@@ -104,15 +104,6 @@ def register_callbacks(app):
                 'start_time': datetime.now(),
                 'output_df': pd.DataFrame(columns=['mb', 'Application Status', 'Transaction Type']),
             })
-
-            # Parse input MB numbers
-            mb_data['mb_numbers'] = [mb.strip() for mb in mb_text.split("\n") if mb.strip()]
-            mb_data['total_mbs'] = len(mb_data['mb_numbers'])
-            mb_data['delay'] = delay
-            mb_data['completed_mbs'] = 0
-            mb_data['start_time'] = datetime.now()
-            mb_data['output_df'] = pd.DataFrame(columns=['mb', 'Application Status', 'Transaction Type'])
-
             # Hide the download button at the start of processing
             return False, "Processing started...", f"{mb_data['total_mbs']} MBs to process.", ""
 
