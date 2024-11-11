@@ -94,6 +94,16 @@ def register_callbacks(app):
         if triggered_id == "mohre-start-button":
             if not mb_text:
                 raise PreventUpdate
+            
+            # Reinitialize mb_data for a new processing batch
+            mb_data.update({
+                'mb_numbers': [mb.strip() for mb in mb_text.split("\n") if mb.strip()],
+                'total_mbs': len(mb_data['mb_numbers']),
+                'delay': delay,
+                'completed_mbs': 0,
+                'start_time': datetime.now(),
+                'output_df': pd.DataFrame(columns=['mb', 'Application Status', 'Transaction Type']),
+            })
 
             # Parse input MB numbers
             mb_data['mb_numbers'] = [mb.strip() for mb in mb_text.split("\n") if mb.strip()]
