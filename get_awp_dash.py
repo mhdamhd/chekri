@@ -135,6 +135,8 @@ def register_callbacks(app):
     )
     def handle_login_and_otp(login_clicks, otp_clicks, username, password, otp_code):
         global app_token
+        global deviceIdProduction
+        global mfaCodeProduction
         ctx = callback_context
         if not ctx.triggered:
             return False, ""
