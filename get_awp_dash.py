@@ -70,7 +70,7 @@ app_token = None
 
 def register_callbacks(app):
     # Helper Function to Update Google Sheet
-    def update_google_sheet(token):
+    def update_google_sheet(token, deviceIdProduction, mfaCodeProduction):
         # Authenticate and connect to Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         # creds = ServiceAccountCredentials.from_json_keyfile_name(SERVICE_ACCOUNT_FILE, scope)
@@ -79,7 +79,7 @@ def register_callbacks(app):
         sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
         # Get the response data
-        res = getAWP(token)
+        res = getAWP(token, deviceIdProduction, mfaCodeProduction)
 
         # Prepare data for the DataFrame
         data = []
@@ -145,7 +145,7 @@ def register_callbacks(app):
         # Login button was clicked
         if triggered_id == "ayoub-login-button":
             try:
-                app_token = login(username, password)
+                app_token, deviceIdProduction = login(username, password)
                 if app_token:
                     return True, "Login successful. Please enter the OTP."
                 else:
@@ -156,13 +156,13 @@ def register_callbacks(app):
         # OTP submit button was clicked
         elif triggered_id == "ayoub-submit-otp-button":
             try:
-                verified = verifyOtp(app_token, otp_code)
+                verified, mfaCodeProduction = verifyOtp(app_token, otp_code)
                 if not verified:
                     # OTP failed, reopen modal
                     return True, "OTP verification failed. Please try again."
                 
                 # OTP successful, update Google Sheet and close modal
-                message = update_google_sheet(app_token)
+                message = update_google_sheet(app_token, deviceIdProduction, mfaCodeProduction)
                 return False, message  # Close the modal and display the message
             except Exception as e:
                 return False, f"An error occurred: {e}"
